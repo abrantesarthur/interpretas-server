@@ -1,0 +1,12 @@
+{
+    "include": ["src"],
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "outDir": "dist",
+        "noEmitOnError": true,
+        "strict": true,
+        "typeRoots": ["node_modules/@types"]
+    },
+    "compileOnSave": true,
+}
