@@ -3,23 +3,21 @@
 // load configuration variables from .env file
 require('dotenv').config();
 
-// // Import google's Media Translation client library
-// const mediaTranslation = require('@google-cloud/media-translation');
-// const mediaTranslationClient = mediaTranslation.SpeechTranslationServiceClient();
-
-// ====================== CONFIGURE SERVER ============================ //
-
-// instantiate the express server
+// import server libraries
 import express = require('express');
 import bodyParser = require('body-parser');
 import http = require('http');
-const app = express();
-app.use(bodyParser.json())
-const server = http.createServer(app);
 
 // import endpoint handlers
 import { login, signup } from './accounts';
 import * as ch from "./channels"
+
+// ====================== CONFIGURE SERVER ============================ //
+
+// instantiate the express server
+const app = express();
+app.use(bodyParser.json())
+const server = http.createServer(app);
 
 // =========================== ROUTERS ================================ //
 

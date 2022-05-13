@@ -14,19 +14,21 @@ const stream = client.streamingTranslateSpeech();
 // ==================== DEFINE HANDLERS ====================== //
 
 const createChannel: RequestHandler = (req, res) => {
-
+    res.end("createChannel");
 }
 
 const emitContent: RequestHandler = (req, res) => {
+    res.end("emitContent");
 
 }
 
 const consumeContent: RequestHandler = (req, res) => {
+    res.end("consumeContent");
 
 }
 
 const getChannels: RequestHandler = (req, res) => {
-
+    res.end("getChannels");
 }
 
 // ==================== EXPORT HANDLERS ====================== //
