@@ -7,6 +7,8 @@ const signup = (req, res) => {
 };
 exports.signup = signup;
 const login = (req, res) => {
+    console.log("\ninside login");
+    console.log(req.sessionID);
     res.end("\nlogin");
 };
 exports.login = login;
