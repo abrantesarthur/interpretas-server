@@ -1,5 +1,8 @@
 import { RequestHandler } from "express";
 
+import {v4 as uuid} from 'uuid';
+
+
 // ==================== DEFINE HANDLERS ====================== //
 
 const signup : RequestHandler = (req, res) => {
@@ -7,6 +10,7 @@ const signup : RequestHandler = (req, res) => {
 }
 
 const login : RequestHandler = (req, res) => {
+    uuid()
     res.end("\nlogin");
 }
 

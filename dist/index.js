@@ -2,70 +2,27 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 // load configuration variables from .env file
 require('dotenv').config();
-// // Import google's Media Translation client library
-// const mediaTranslation = require('@google-cloud/media-translation');
-// const mediaTranslationClient = mediaTranslation.SpeechTranslationServiceClient();
+// import server libraries
+const express = require("express");
+const bodyParser = require("body-parser");
+const http = require("http");
+// import endpoint handlers
+const accounts_1 = require("./accounts");
+const ch = require("./channels");
 // ====================== CONFIGURE SERVER ============================ //
 // instantiate the express server
-const express = require("express");
 const app = express();
-const bodyParser = require("body-parser");
-// middleware to parse json
 app.use(bodyParser.json());
-const http = require("http");
 const server = http.createServer(app);
 // =========================== ROUTERS ================================ //
-app.get("/", (_, res) => {
-    res.end("Hello world\n");
-});
-// Imports the Cloud Media Translation client library
-const media_translation_1 = require("@google-cloud/media-translation");
-// Creates a client
-const client = new media_translation_1.SpeechTranslationServiceClient();
-// Create a recognize stream
-const stream = client.streamingTranslateSpeech();
-let isFirst = true;
-app.post('/channel', (req, res) => {
-    const audioContent = req.body.audio_content;
-    // TODO: check that the audio content is not undefined
-    // TODO: accumulate some input per user, then translate all at once
-    const config = {
-        // TODO: make dynamic
-        // translate from english to portuguese
-        audioConfig: {
-            audioEncoding: "linear16",
-            sourceLanguageCode: "en-US",
-            targetLanguageCode: "pt-BR",
-        },
-        // continue translating even if speaker pauses
-        singleUtterance: false,
-    };
-    // TODO: this is causing a memory leak: many listeners are being set
-    stream.on('data', data => {
-        res.end(`\n${data.result.textTranslationResult.translation}`);
-    });
-    // listen for google Media Translation errors and send to client
-    stream.on('error', e => {
-        res.status(500);
-        res.send("failed to translate audio");
-    });
-    if (!stream.destroyed) {
-        // First request needs to have only a streaming config, no data.
-        if (isFirst) {
-            console.log("\nfirst");
-            // listen for google Media Translation responses and send to client
-            stream.write({
-                streamingConfig: config,
-                audioContent: null,
-            });
-            isFirst = false;
-        }
-        stream.write({
-            streamingConfig: config,
-            audioContent: audioContent,
-        });
-    }
-});
+// account endpoints
+app.post("/signup", accounts_1.signup);
+app.post("/login", accounts_1.login);
+// channel endpoints
+app.post("/accounts/:accountId/channels", ch.createChannel);
+app.post("/channels/:channelId", ch.emitContent);
+app.get("channels/:channelId", ch.consumeContent);
+app.get("/", ch.getChannels);
 // =========================== START SERVER ================================ //
 const port = Number(process.env.PORT);
 const hostname = process.env.HOSTNAME;
