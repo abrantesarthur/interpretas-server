@@ -1,5 +1,7 @@
+import { Console } from "console";
 import { RequestHandler } from "express";
 import passport = require("passport");
+import {Error, ErrorType} from "./error";
 
 
 // ==================== DEFINE HANDLERS ====================== //
@@ -13,20 +15,16 @@ const getLogin : RequestHandler = (req, res) => {
 }
 
 const postLogin : RequestHandler = (req, res, next) => {
-    console.log("inside POST /login callback");
-    console.log("session id: " + req.sessionID);
-    console.log(`req.user: ${JSON.stringify(req.user)}`)
 
     // passport.authenticate() invokes the local strategy defined in index.ts to
     // validate the 'email' and 'password' passed as part of this request.
     passport.authenticate('local', (err, user, info) => {
-        console.log("inside passport.authenticate()");
-        console.log(`req.user: ${JSON.stringify(req.user)}`)
-        let session: any = req.session;
-        console.log(`req.session.passport: ${JSON.stringify(session.passport)}`) 
 
         // if local strategy returned error, call error handling middleware
-        if(err !== undefined) return next(err);
+        if(err) return next(err);
+
+        // if passport.deserializeUser() returned error, call error handling middleware
+        // if(user === false) next(err);
 
         
         // if the 'email' and 'password' are successfully validated by the local
@@ -35,10 +33,17 @@ const postLogin : RequestHandler = (req, res, next) => {
         // Then, the callback passed here is invoked.
         // TODO: handle error case.
         req.login(user, (err) => {
-            console.log("inside req.login() callback");
-            console.log(`req.user: ${JSON.stringify(req.user)}`)
-            let session: any = req.session;
-            console.log(`req.session.passport: ${JSON.stringify(session.passport)}`)    
+            // if passport.serializeUser returned an error, call error handling middleware
+            if(err) {
+                let e : Error = {
+                    code: 500,
+                    type: ErrorType.INTERNAL_ERROR,
+                    message: 'something wrong happened. Try again later',
+                };
+                return next(e);
+            }
+            
+            // TODO: consider redirecting instead
             return res.send("You are authenticated and logged in!\n");
         })
     })(req, res, next);

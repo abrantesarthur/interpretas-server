@@ -57,9 +57,10 @@ const users = [
 passport.use(new PassportLocalStrategy(
 // alias username to 'email'
 { usernameField: 'email' }, (email, password, done) => {
+    console.log("inside local strategy");
     // TODO: query database
     const user = users[0];
-    // TODO: standardize error type in a utils file or something
+    // if email is invalid, return error to passport.authenticate()
     if (email !== user.email) {
         let err = {
             code: 422,
@@ -68,6 +69,7 @@ passport.use(new PassportLocalStrategy(
         };
         return done(err);
     }
+    // if password is invalid, return error to passport.authenticate()
     if (password !== user.password) {
         let err = {
             code: 422,
@@ -76,23 +78,17 @@ passport.use(new PassportLocalStrategy(
         };
         return done(err);
     }
-    let err = {
-        code: 422,
-        type: error_1.ErrorType.INVALID_PARAMETER,
-        message: '"password" is invalid'
-    };
-    return done(err);
-    // success: implicitly add a login() method to req object
-    // and return the user object to passport.authenticate()
+    // implicitly add a login() method to 'req' and return 'user' to passport.authenticate()
     return done(null, user);
 }));
 // Tell passport how to serialize the user. this is invoked by req.login()
 // if passport.authentication() is successful. It adds user information to
 // the session store and to the 'req' object
 passport.serializeUser((user, done) => {
-    console.log('Inside passport.serializeUser(). user id is save to the session file store here');
+    console.log("inside serialize");
+    console.log(user);
     process.nextTick(() => {
-        done(null, user);
+        done(null, user.id);
     });
 });
 // Tell passport how to deserialize the user. This is invoked when the 
@@ -101,11 +97,20 @@ passport.serializeUser((user, done) => {
 // If success, it passes it to the callback function, so we can retrieve
 // the remaining user info from our database.
 passport.deserializeUser((id, done) => {
-    console.log('Inside deserializeUser callback');
-    console.log(`The user id passport saved in the session file store is: ${id}`);
+    // TODO: see what happens if this returns false
     const user = users[0].id === id ? users[0] : false;
-    console.log(user);
-    done(null, user);
+    // TODO: return error if couldn't find user
+    if (user === false) {
+        let err = {
+            code: 401,
+            type: error_1.ErrorType.REQUEST_DENIED,
+            message: 'client is not authenticated'
+        };
+        done(err);
+    }
+    else {
+        done(null, user);
+    }
 });
 // authentication middleware
 app.use(passport.initialize());
@@ -122,9 +127,7 @@ app.get("channels/:channelId", ch.consumeContent);
 app.get("/", ch.getChannels);
 // =========================== START SERVER ================================ //
 // error handling middleware must be defined last
-app.use((err, req, res, next) => {
-    res.status(err.code).send(err);
-});
+app.use(error_1.errorHandler);
 const port = Number(process.env.PORT);
 const hostname = process.env.HOSTNAME;
 server.listen(port, hostname, () => {

@@ -21,7 +21,14 @@ const consumeContent = (req, res) => {
 };
 exports.consumeContent = consumeContent;
 const getChannels = (req, res) => {
-    res.end("getChannels");
+    console.log("\nInside getChannels");
+    console.log("session id: " + req.sessionID);
+    if (req.isAuthenticated()) {
+        res.send('you hit getChannels\n');
+    }
+    else {
+        res.send('you are not authenticated\n');
+    }
 };
 exports.getChannels = getChannels;
 // app.post('/channel', (req, res) => {

@@ -14,12 +14,20 @@ const stream = client.streamingTranslateSpeech();
 // ==================== DEFINE HANDLERS ====================== //
 
 const createChannel: RequestHandler = (req, res) => {
-    res.end("createChannel");
+    // 'isAuthenticated' is merged into 'req' by 'passport'
+    if(req.isAuthenticated()) {
+        res.send('you hit getChannels\n')
+    } else {
+        res.send('you are not authenticated\n')
+    }
 }
 
 const emitContent: RequestHandler = (req, res) => {
-    res.end("emitContent");
-
+    if(req.isAuthenticated()) {
+        res.send('you hit getChannels\n')
+    } else {
+        res.send('you are not authenticated\n')
+    }
 }
 
 const consumeContent: RequestHandler = (req, res) => {
@@ -28,7 +36,7 @@ const consumeContent: RequestHandler = (req, res) => {
 }
 
 const getChannels: RequestHandler = (req, res) => {
-    res.end("getChannels");
+    res.end("getChannels");   
 }
 
 // ==================== EXPORT HANDLERS ====================== //
