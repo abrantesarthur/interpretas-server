@@ -8,4 +8,3 @@ export const Channel = mongoose.model(
         password: String,
     })
 );
-
