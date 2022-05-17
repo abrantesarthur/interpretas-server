@@ -18,15 +18,10 @@ const postLogin : RequestHandler = (req, res, next) => {
 
     // passport.authenticate() invokes the local strategy defined in index.ts to
     // validate the 'email' and 'password' passed as part of this request.
-    passport.authenticate('local', (err, user, info) => {
-
+    passport.authenticate('local', (err, user, _) => {
         // if local strategy returned error, call error handling middleware
         if(err) return next(err);
-
-        // if passport.deserializeUser() returned error, call error handling middleware
-        // if(user === false) next(err);
-
-        
+ 
         // if the 'email' and 'password' are successfully validated by the local
         // strategy in index.ts, calling req.login() will invoke passport.serializeUser(),
         // defined in index.ts, which, in turn, saves user info in the session.

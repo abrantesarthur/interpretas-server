@@ -8,16 +8,16 @@ const http = require("http");
 // import server middlewares
 const bodyParser = require("body-parser");
 const session = require("express-session");
-const SessionFileStore = require('session-file-store')(session);
-const passport = require("passport");
-const passportStrategy = require("passport-local");
-const PassportLocalStrategy = passportStrategy.Strategy;
+const sessionFileStore = require("session-file-store");
+const SessionFileStore = sessionFileStore(session);
 // import endpoint handlers
 const accounts_1 = require("./accounts");
 const ch = require("./channels");
 // other imports
 const uuid_1 = require("uuid");
 const error_1 = require("./error");
+const auth_1 = require("./auth");
+const passport = require("passport");
 // ====================== CONFIGURE SERVER ============================ //
 // instantiate the express server
 const app = express();
@@ -27,11 +27,7 @@ app.use(bodyParser.json());
 // session middleware
 app.use(session({
     // the function that generates unique session ids
-    genid: (req) => {
-        console.log("\nInside session middleware genid()");
-        console.log("session id: " + req.sessionID);
-        return (0, uuid_1.v4)();
-    },
+    genid: (_) => (0, uuid_1.v4)(),
     // the secret used to sign the session ID cookie
     secret: process.env.SESSION_SECRET || "keyboard cat",
     // don't force the session to be saved back to the store
@@ -41,78 +37,12 @@ app.use(session({
     // save sessions in files in `./sessions` folder instead of memory
     // this way, we don't lose session when the server crashes
     // TODO: consider using a database as a store (e.g., connect-sqlite3) (see http://www.passportjs.org/tutorials/password/session/)
-    store: new SessionFileStore(),
+    store: new SessionFileStore({
+        ttl: 36000 // 10 hours
+    })
 }));
-// TODO: replace this by a database
-const users = [
-    {
-        id: 'dgniaogn-sgnn2ng-gnas',
-        email: 'test@test.com',
-        password: 'password'
-    }
-];
-// configure passport authentication middleware to use local strategy (i.e., email + password)
-// the 'verify' function (i.e., secong argument to PassportLocalStrategy) is called whenever
-// we invoke passport.authenticate() (see postLogin() handler in accounts.ts)
-passport.use(new PassportLocalStrategy(
-// alias username to 'email'
-{ usernameField: 'email' }, (email, password, done) => {
-    console.log("inside local strategy");
-    // TODO: query database
-    const user = users[0];
-    // if email is invalid, return error to passport.authenticate()
-    if (email !== user.email) {
-        let err = {
-            code: 422,
-            type: error_1.ErrorType.INVALID_PARAMETER,
-            message: '"email" is invalid'
-        };
-        return done(err);
-    }
-    // if password is invalid, return error to passport.authenticate()
-    if (password !== user.password) {
-        let err = {
-            code: 422,
-            type: error_1.ErrorType.INVALID_PARAMETER,
-            message: '"password" is invalid'
-        };
-        return done(err);
-    }
-    // implicitly add a login() method to 'req' and return 'user' to passport.authenticate()
-    return done(null, user);
-}));
-// Tell passport how to serialize the user. this is invoked by req.login()
-// if passport.authentication() is successful. It adds user information to
-// the session store and to the 'req' object
-passport.serializeUser((user, done) => {
-    console.log("inside serialize");
-    console.log(user);
-    process.nextTick(() => {
-        done(null, user.id);
-    });
-});
-// Tell passport how to deserialize the user. This is invoked when the 
-// client sends a request with a session information. It matches the
-// session id sent in the request to the session id in the session store.
-// If success, it passes it to the callback function, so we can retrieve
-// the remaining user info from our database.
-passport.deserializeUser((id, done) => {
-    // TODO: see what happens if this returns false
-    const user = users[0].id === id ? users[0] : false;
-    // TODO: return error if couldn't find user
-    if (user === false) {
-        let err = {
-            code: 401,
-            type: error_1.ErrorType.REQUEST_DENIED,
-            message: 'client is not authenticated'
-        };
-        done(err);
-    }
-    else {
-        done(null, user);
-    }
-});
 // authentication middleware
+(0, auth_1.configureAuthentication)(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 // =========================== ROUTERS ================================ //

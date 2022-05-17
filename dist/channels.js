@@ -9,11 +9,22 @@ const client = new media_translation_1.SpeechTranslationServiceClient();
 const stream = client.streamingTranslateSpeech();
 // ==================== DEFINE HANDLERS ====================== //
 const createChannel = (req, res) => {
-    res.end("createChannel");
+    // 'isAuthenticated' is merged into 'req' by 'passport'
+    if (req.isAuthenticated()) {
+        res.send('you hit getChannels\n');
+    }
+    else {
+        res.send('you are not authenticated\n');
+    }
 };
 exports.createChannel = createChannel;
 const emitContent = (req, res) => {
-    res.end("emitContent");
+    if (req.isAuthenticated()) {
+        res.send('you hit getChannels\n');
+    }
+    else {
+        res.send('you are not authenticated\n');
+    }
 };
 exports.emitContent = emitContent;
 const consumeContent = (req, res) => {
@@ -21,8 +32,6 @@ const consumeContent = (req, res) => {
 };
 exports.consumeContent = consumeContent;
 const getChannels = (req, res) => {
-    console.log("\nInside getChannels");
-    console.log("session id: " + req.sessionID);
     if (req.isAuthenticated()) {
         res.send('you hit getChannels\n');
     }

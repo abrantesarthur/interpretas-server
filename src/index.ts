@@ -10,7 +10,8 @@ import http = require('http');
 // import server middlewares
 import bodyParser = require('body-parser');
 import session = require('express-session');
-const SessionFileStore = require('session-file-store')(session);
+import sessionFileStore = require('session-file-store');
+const SessionFileStore = sessionFileStore(session);
 
 // import endpoint handlers
 import { getLogin, postLogin, signup } from './accounts';
@@ -37,16 +38,18 @@ app.use(session({
   genid: (_) => uuid(),
   // the secret used to sign the session ID cookie
   secret: process.env.SESSION_SECRET || "keyboard cat",
-  // don't force the session to be saved back to the store
+  // don't force the session to be saved back to the store, even if the session
+  // was never modified during the request
   resave: false,
   // force a session that is uninitialized to be saved to the store
   saveUninitialized: true,
   // save sessions in files in `./sessions` folder instead of memory
   // this way, we don't lose session when the server crashes
   // TODO: consider using a database as a store (e.g., connect-sqlite3) (see http://www.passportjs.org/tutorials/password/session/)
-  store: new SessionFileStore(),
+  store: new SessionFileStore({
+    ttl: 36000  // 10 hours
+  })
 }))
-
 
 // authentication middleware
 configureAuthentication(passport);
