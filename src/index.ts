@@ -24,7 +24,7 @@ const db = new MongoClient(process.env.DB_URI || "")
 // other imports
 import {v4 as uuid} from 'uuid';
 import { errorHandler } from './error';
-import {configureAuthentication} from './auth';
+import {configureAuthentication} from './config/auth';
 import passport = require('passport');
 
 // ====================== CONFIGURE SERVER ============================ //
