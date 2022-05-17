@@ -14,7 +14,7 @@ import sessionFileStore = require('session-file-store');
 const SessionFileStore = sessionFileStore(session);
 
 // import endpoint handlers
-import { getLogin, postLogin, signup } from './routes/accounts';
+import { getLogin, postLogin, signup } from './routes/auth';
 
 // import database
 // TODO: consider moving db out of mongoDB Atlas
