@@ -5,8 +5,8 @@ import {Error, ErrorType} from "../error";
 
 // ==================== DEFINE HANDLERS ====================== //
 
-const signup : RequestHandler = (req, res) => {
-    res.end("\nsignup");
+const postSignup : RequestHandler = (req, res) => {
+    // validate request
 }
 
 const getLogin : RequestHandler = (req, res) => {
@@ -46,4 +46,4 @@ const postLogin : RequestHandler = (req, res, next) => {
 
 // ==================== EXPORT HANDLERS ====================== //
 
-export {signup, getLogin, postLogin};
+export {postSignup, getLogin, postLogin};

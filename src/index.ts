@@ -14,17 +14,17 @@ import sessionFileStore = require('session-file-store');
 const SessionFileStore = sessionFileStore(session);
 
 // import endpoint handlers
-import { getLogin, postLogin, signup } from './routes/auth';
+import { getLogin, postLogin, postSignup } from './routes/auth';
+import * as ch from './routes/channels';
 
 // import database
 // TODO: consider moving db out of mongoDB Atlas
-import { MongoClient } from 'mongodb';
-const db = new MongoClient(process.env.DB_URI || "")
+import * as db from 'mongoose';
 
 // other imports
 import {v4 as uuid} from 'uuid';
 import { errorHandler } from './error';
-import {configureAuthentication} from './config/auth';
+import {configureAuthentication} from './auth';
 import passport = require('passport');
 
 // ====================== CONFIGURE SERVER ============================ //
@@ -60,10 +60,21 @@ configureAuthentication(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ====================== CONFIGURE DATABASE ============================ //
+
+db.connect(process.env.DB_URI || "")
+    .then(() => {
+        console.log("connected to MongoDB...");
+    })
+    .catch((err) => {
+        console.log("Connection error: " + err);
+        process.exit();
+    });
+
 // =========================== ROUTERS ================================ //
 
 // account endpoints
-app.post("/signup", signup);
+app.post("/signup", postSignup);
 app.post("/login", postLogin);
 app.get("/login", getLogin);
 
