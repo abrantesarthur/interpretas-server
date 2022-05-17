@@ -64,9 +64,9 @@ app.post("/signup", auth_1.postSignup);
 app.post("/login", auth_1.postLogin);
 app.get("/login", auth_1.getLogin);
 // channel endpoints
-app.post("/accounts/:accountId/channels", ch.createChannel);
-app.post("/channels/:channelId", ch.emitContent);
-app.get("channels/:channelId", ch.consumeContent);
+app.post("/accounts/:radioHostId/channels", ch.createChannel);
+app.post("/channels/:radioChannelId", ch.emitContent);
+app.get("channels/:radioChannelId", ch.consumeContent);
 app.get("/", ch.getChannels);
 // =========================== START SERVER ================================ //
 // error handling middleware must be defined last

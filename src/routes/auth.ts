@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import passport = require("passport");
 import {Error, ErrorType} from "../error";
 import { validateArgument } from "../utils";
-import { RadioHost } from "../models/host";
+import { RadioHost } from "../models/radioHost";
 import * as bcrypt from 'bcrypt';
 import { assert } from "console";
 

@@ -13,11 +13,10 @@ exports.postLogin = exports.getLogin = exports.postSignup = void 0;
 const passport = require("passport");
 const error_1 = require("../error");
 const utils_1 = require("../utils");
-const host_1 = require("../models/host");
+const radioHost_1 = require("../models/radioHost");
 const bcrypt = require("bcrypt");
 const console_1 = require("console");
 // ==================== DEFINE HANDLERS ====================== //
-// TODO: split signup between host and other types of users
 // TODO: refactor database saving logic. The nesting here is ugly
 const postSignup = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // validate argument
@@ -27,31 +26,31 @@ const postSignup = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     catch (e) {
         return next(e);
     }
-    // make sure host hasn't already signed up
-    host_1.Host.findOne({
+    // make sure radio host hasn't already signed up
+    radioHost_1.RadioHost.findOne({
         email: req.body.email
     })
-        .exec((err, host) => __awaiter(void 0, void 0, void 0, function* () {
+        .exec((err, radioHost) => __awaiter(void 0, void 0, void 0, function* () {
         if (err) {
             return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, "something wrong happened"));
         }
-        if (host) {
+        if (radioHost) {
             return next(new error_1.Error(422, error_1.ErrorType.INVALID_PARAMETER, "email '" + req.body.email + "' already in use"));
         }
-        // save host on database
+        // save radioHost on database
         (0, console_1.assert)(req.body.password !== undefined);
         (0, console_1.assert)(req.body.password !== null);
         let password = req.body.password || "";
-        const h = new host_1.Host({
+        const rh = new radioHost_1.RadioHost({
             name: req.body.name,
             email: req.body.email,
             password: bcrypt.hashSync(password, 8)
         });
-        yield h.save((err, host) => {
+        yield rh.save((err, radioHost) => {
             if (err) {
                 return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, "something wrong happened"));
             }
-            return res.end(JSON.stringify({ account_id: host["_id"] }));
+            return res.end(JSON.stringify({ account_id: radioHost["_id"] }));
         });
     }));
 });

@@ -79,9 +79,9 @@ app.post("/login", postLogin);
 app.get("/login", getLogin);
 
 // channel endpoints
-app.post("/accounts/:accountId/channels", ch.createChannel);
-app.post("/channels/:channelId", ch.emitContent);
-app.get("channels/:channelId", ch.consumeContent);
+app.post("/accounts/:radioHostId/channels", ch.createChannel);
+app.post("/channels/:radioChannelId", ch.emitContent);
+app.get("channels/:radioChannelId", ch.consumeContent);
 app.get("/", ch.getChannels);
 
 // =========================== START SERVER ================================ //
