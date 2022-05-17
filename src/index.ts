@@ -15,7 +15,11 @@ const SessionFileStore = sessionFileStore(session);
 
 // import endpoint handlers
 import { getLogin, postLogin, signup } from './accounts';
-import * as ch from "./channels"
+import { MongoClient } from 'mongodb';
+
+
+// import database
+import * as db from 'mongodb';
 
 // other imports
 import {v4 as uuid} from 'uuid';
