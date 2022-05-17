@@ -4,3 +4,4 @@ sessions
 google_application_credentials.json
 cookie-file.txt
 package-lock.json
+.env

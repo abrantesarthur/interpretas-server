@@ -1,7 +1,6 @@
-import { Console } from "console";
 import { RequestHandler } from "express";
 import passport = require("passport");
-import {Error, ErrorType} from "./error";
+import {Error, ErrorType} from "../error";
 
 
 // ==================== DEFINE HANDLERS ====================== //

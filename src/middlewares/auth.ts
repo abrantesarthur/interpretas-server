@@ -1,7 +1,7 @@
 import {PassportStatic} from 'passport';
 import passportStrategy = require('passport-local');
 const PassportLocalStrategy = passportStrategy.Strategy;
-import { Error, ErrorType } from './error';
+import { Error, ErrorType } from '../error';
 
 // TODO: replace this by a database
 const users = [

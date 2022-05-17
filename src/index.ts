@@ -14,12 +14,12 @@ import sessionFileStore = require('session-file-store');
 const SessionFileStore = sessionFileStore(session);
 
 // import endpoint handlers
-import { getLogin, postLogin, signup } from './accounts';
-import { MongoClient } from 'mongodb';
-
+import { getLogin, postLogin, signup } from './routes/accounts';
 
 // import database
-import * as db from 'mongodb';
+// TODO: consider moving db out of mongoDB Atlas
+import { MongoClient } from 'mongodb';
+const db = new MongoClient(process.env.DB_URI || "")
 
 // other imports
 import {v4 as uuid} from 'uuid';
