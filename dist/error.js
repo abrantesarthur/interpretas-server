@@ -7,6 +7,7 @@ var ErrorType;
     ErrorType["INVALID_REQUEST"] = "INVALID_REQUEST";
     ErrorType["INTERNAL_ERROR"] = "INTERNAL_ERROR";
     ErrorType["REQUEST_DENIED"] = "REQUEST_DENIED";
+    ErrorType["NOT_FOUND"] = "NOT_FOUND";
 })(ErrorType = exports.ErrorType || (exports.ErrorType = {}));
 class Error {
     constructor(code, type, message) {

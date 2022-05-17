@@ -2,15 +2,8 @@ import {PassportStatic} from 'passport';
 import passportStrategy = require('passport-local');
 const PassportLocalStrategy = passportStrategy.Strategy;
 import { Error, ErrorType } from './error';
-
-// TODO: replace this by a database
-const users = [
-    {
-      id: 'dgniaogn-sgnn2ng-gnas',
-      email: 'test@test.com',
-      password: 'password'
-    }
-];
+import { Host } from './models/host';
+import * as bcrypt from 'bcrypt';
 
 export const configureAuthentication = (passport: PassportStatic) => {
     
@@ -22,31 +15,39 @@ export const configureAuthentication = (passport: PassportStatic) => {
         {usernameField: 'email'},
         (email, password, done) => {
 
-        // TODO: query from database
-        const user = users[0];
-    
-        // if email is invalid, return error to passport.authenticate()
-        if(email !== user.email) {
-            let err : Error = {
-            code: 422,
-            type: ErrorType.INVALID_PARAMETER,
-            message: '"email" is invalid'
-            }
-            return done(err);
-        }
-    
-        // if password is invalid, return error to passport.authenticate()
-        if(password !== user.password) {
-            let err : Error = {
-            code: 422,
-            type: ErrorType.INVALID_PARAMETER,
-            message: '"password" is invalid'
-            }
-            return done(err);
-        }
-    
-        // implicitly add a login() method to 'req' and return 'user' to passport.authenticate()
-        return done(null, user);
+            // look for user on database
+            Host.findOne({
+                email: email
+            }).exec((err, user: any) => {
+                if(err) {
+                    return done(new Error(
+                        500,
+                        ErrorType.INTERNAL_ERROR,
+                        "something wrong happened"
+                    ));
+                }
+
+                // if account is not found, return error to passport.authenticate()
+                if(!user) {
+                    return done(new Error(
+                        404,
+                        ErrorType.NOT_FOUND,
+                        "could not find account with email '" + email + "'",
+                    ));
+                }
+
+                // if password is invalid, return error to passport.authenticate()
+                if(!bcrypt.compareSync(password, user.password)) {
+                    return done(new Error(
+                        422,
+                        ErrorType.INVALID_PARAMETER,
+                        '"password" is invalid'
+                    ));
+                }
+
+                // implicitly add a login() method to 'req' and return 'user' to passport.authenticate()
+                return done(null, user);
+            })
         }
     ))
     
@@ -55,7 +56,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
     // the session store and to the 'req' object
     passport.serializeUser((user: any, done) => {
         process.nextTick(() => {
-            done(null, user.id);
+            done(null, user._id);
         })
     })
     
@@ -65,20 +66,26 @@ export const configureAuthentication = (passport: PassportStatic) => {
     // If success, it passes it to the callback function, so we can retrieve
     // the remaining user info from our database.
     passport.deserializeUser((id, done) => {
-        // TODO: get user from database
-        const user = users[0].id === id ? users[0] : false;
-
-        if(user === false) {
-            let err : Error = {
-            code: 401,
-            type: ErrorType.REQUEST_DENIED,
-            message: 'client is not authenticated'
+        //  get user from database
+        Host.findById(id).exec((err, user) => {
+            if(err) {
+                return done(new Error(
+                    500,
+                    ErrorType.INTERNAL_ERROR,
+                    "something wrong happened"
+                ));
             }
-            done(err);
-        } else {
-            done(null, user);
-        }
 
+            if(!user) {
+                return done(new Error(
+                    401,
+                    ErrorType.REQUEST_DENIED,
+                    'client is not authenticated'
+                ));
+            }
+
+            done(null, user);
+        })
     })
 }
   

@@ -3,6 +3,7 @@ export enum ErrorType {
     INVALID_REQUEST = "INVALID_REQUEST",
     INTERNAL_ERROR = "INTERNAL_ERROR",
     REQUEST_DENIED = "REQUEST_DENIED",
+    NOT_FOUND = "NOT_FOUND",
 }
 
 export class Error {

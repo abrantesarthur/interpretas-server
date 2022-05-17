@@ -74,6 +74,17 @@ const getLogin : RequestHandler = (req, res) => {
 }
 
 const postLogin : RequestHandler = (req, res, next) => {
+    // validate argument
+    try {
+        validateArgument(
+            req.body,
+            ["email", "password"],
+            ["string", "string"],
+            [true, true]
+        );    
+    } catch(e) {
+        return next(e);
+    }
 
     // passport.authenticate() invokes the local strategy defined in index.ts to
     // validate the 'email' and 'password' passed as part of this request.
