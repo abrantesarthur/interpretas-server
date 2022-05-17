@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 
-export const RadioHost = mongoose.model(
-    "radio_host",
+export const Channel = mongoose.model(
+    "channel",
     new mongoose.Schema({
         name: String,
         email: String,

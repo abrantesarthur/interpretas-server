@@ -2,7 +2,7 @@ import {PassportStatic} from 'passport';
 import passportStrategy = require('passport-local');
 const PassportLocalStrategy = passportStrategy.Strategy;
 import { Error, ErrorType } from './error';
-import { Host } from './models/host';
+import { RadioHost } from './models/host';
 import * as bcrypt from 'bcrypt';
 
 export const configureAuthentication = (passport: PassportStatic) => {
@@ -16,9 +16,9 @@ export const configureAuthentication = (passport: PassportStatic) => {
         (email, password, done) => {
 
             // look for user on database
-            Host.findOne({
+            RadioHost.findOne({
                 email: email
-            }).exec((err, user: any) => {
+            }).exec((err, radioHost: any) => {
                 if(err) {
                     return done(new Error(
                         500,
@@ -28,7 +28,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
                 }
 
                 // if account is not found, return error to passport.authenticate()
-                if(!user) {
+                if(!radioHost) {
                     return done(new Error(
                         404,
                         ErrorType.NOT_FOUND,
@@ -37,7 +37,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
                 }
 
                 // if password is invalid, return error to passport.authenticate()
-                if(!bcrypt.compareSync(password, user.password)) {
+                if(!bcrypt.compareSync(password, radioHost.password)) {
                     return done(new Error(
                         422,
                         ErrorType.INVALID_PARAMETER,
@@ -45,8 +45,8 @@ export const configureAuthentication = (passport: PassportStatic) => {
                     ));
                 }
 
-                // implicitly add a login() method to 'req' and return 'user' to passport.authenticate()
-                return done(null, user);
+                // implicitly add a login() method to 'req' and return 'radioHost' to passport.authenticate()
+                return done(null, radioHost);
             })
         }
     ))
@@ -67,7 +67,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
     // the remaining user info from our database.
     passport.deserializeUser((id, done) => {
         //  get user from database
-        Host.findById(id).exec((err, user) => {
+        RadioHost.findById(id).exec((err, radioHOst) => {
             if(err) {
                 return done(new Error(
                     500,
@@ -76,7 +76,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
                 ));
             }
 
-            if(!user) {
+            if(!radioHOst) {
                 return done(new Error(
                     401,
                     ErrorType.REQUEST_DENIED,
@@ -84,7 +84,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
                 ));
             }
 
-            done(null, user);
+            done(null, radioHOst);
         })
     })
 }

@@ -2,14 +2,13 @@ import { RequestHandler } from "express";
 import passport = require("passport");
 import {Error, ErrorType} from "../error";
 import { validateArgument } from "../utils";
-import { Host } from "../models/host";
+import { Host, RadioHost } from "../models/host";
 import * as bcrypt from 'bcrypt';
 import { assert } from "console";
 
 
 // ==================== DEFINE HANDLERS ====================== //
 
-// TODO: split signup between host and other types of users
 // TODO: refactor database saving logic. The nesting here is ugly
 const postSignup : RequestHandler = async (req, res, next) => {
     // validate argument
@@ -24,11 +23,11 @@ const postSignup : RequestHandler = async (req, res, next) => {
         return next(e);
     }
     
-    // make sure host hasn't already signed up
-    Host.findOne({
+    // make sure radio host hasn't already signed up
+    RadioHost.findOne({
         email: req.body.email
     })
-    .exec(async (err, host) => {
+    .exec(async (err, radioHost) => {
         if(err) {
             return next(new Error(
                 500,
@@ -37,7 +36,7 @@ const postSignup : RequestHandler = async (req, res, next) => {
             ));
         }
 
-        if(host) {
+        if(radioHost) {
             return next(new Error(
                 422,
                 ErrorType.INVALID_PARAMETER,
@@ -45,17 +44,17 @@ const postSignup : RequestHandler = async (req, res, next) => {
             ));
         }
 
-        // save host on database
+        // save radioHost on database
         assert(req.body.password !== undefined);
         assert(req.body.password !== null);
         let password : string = req.body.password || "";
 
-        const h = new Host({
+        const rh = new RadioHost({
             name: req.body.name,
             email: req.body.email,
             password: bcrypt.hashSync(password, 8)
         });
-        await h.save((err: any, host: any) => {
+        await rh.save((err: any, radioHost: any) => {
             if(err) {
                 return next(new Error(
                     500,
@@ -64,7 +63,7 @@ const postSignup : RequestHandler = async (req, res, next) => {
                 ));
             }
             
-            return res.end(JSON.stringify({account_id: host["_id"]}));
+            return res.end(JSON.stringify({account_id: radioHost["_id"]}));
         })
     })    
 }

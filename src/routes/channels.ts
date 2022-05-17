@@ -11,7 +11,7 @@ const client = new SpeechTranslationServiceClient();
 const stream = client.streamingTranslateSpeech();
 
 
-// ==================== DEFINE HANDLERS ====================== //
+// ======================== DEFINE HANDLERS ========================== //
 
 const createChannel: RequestHandler = (req, res) => {
     // 'isAuthenticated' is merged into 'req' by 'passport'
@@ -36,11 +36,7 @@ const consumeContent: RequestHandler = (req, res) => {
 }
 
 const getChannels: RequestHandler = (req, res) => {
-    if(req.isAuthenticated()) {
-        res.send('you hit getChannels\n')
-    } else {
-        res.send('you are not authenticated\n')
-    } 
+    res.send('you hit getChannels\n')
 }
 
 // ==================== EXPORT HANDLERS ====================== //
