@@ -1,12 +1,72 @@
 import { RequestHandler } from "express";
 import passport = require("passport");
 import {Error, ErrorType} from "../error";
+import { validateArgument } from "../utils";
+import { Host } from "../models/host";
+import * as bcrypt from 'bcrypt';
+import { assert } from "console";
 
 
 // ==================== DEFINE HANDLERS ====================== //
 
-const postSignup : RequestHandler = (req, res) => {
-    // validate request
+// TODO: split signup between host and other types of users
+// TODO: refactor database saving logic. The nesting here is ugly
+const postSignup : RequestHandler = async (req, res, next) => {
+    // validate argument
+    try {
+        validateArgument(
+            req.body,
+            ["name", "email", "password"],
+            ["string", "string", "string"],
+            [true, true, true]
+        );    
+    } catch(e) {
+        return next(e);
+    }
+    
+    // make sure host hasn't already signed up
+    Host.findOne({
+        email: req.body.email
+    })
+    .exec(async (err, host) => {
+        if(err) {
+            return next(new Error(
+                500,
+                ErrorType.INTERNAL_ERROR,
+                "something wrong happened"
+            ));
+        }
+
+        if(host) {
+            return next(new Error(
+                422,
+                ErrorType.INVALID_PARAMETER,
+                "email '" + req.body.email + "' already in use"
+            ));
+        }
+
+        // save host on database
+        assert(req.body.password !== undefined);
+        assert(req.body.password !== null);
+        let password : string = req.body.password || "";
+
+        const h = new Host({
+            name: req.body.name,
+            email: req.body.email,
+            password: bcrypt.hashSync(password, 8)
+        });
+        await h.save((err: any, host: any) => {
+            if(err) {
+                return next(new Error(
+                    500,
+                    ErrorType.INTERNAL_ERROR,
+                    "something wrong happened"
+                ));
+            }
+            
+            return res.end(JSON.stringify({account_id: host["_id"]}));
+        })
+    })    
 }
 
 const getLogin : RequestHandler = (req, res) => {

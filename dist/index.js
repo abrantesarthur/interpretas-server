@@ -11,12 +11,15 @@ const session = require("express-session");
 const sessionFileStore = require("session-file-store");
 const SessionFileStore = sessionFileStore(session);
 // import endpoint handlers
-const accounts_1 = require("./accounts");
-const ch = require("./channels");
+const auth_1 = require("./routes/auth");
+const ch = require("./routes/channels");
+// import database
+// TODO: consider moving db out of mongoDB Atlas
+const db = require("mongoose");
 // other imports
 const uuid_1 = require("uuid");
 const error_1 = require("./error");
-const auth_1 = require("./auth");
+const auth_2 = require("./auth");
 const passport = require("passport");
 // ====================== CONFIGURE SERVER ============================ //
 // instantiate the express server
@@ -30,7 +33,8 @@ app.use(session({
     genid: (_) => (0, uuid_1.v4)(),
     // the secret used to sign the session ID cookie
     secret: process.env.SESSION_SECRET || "keyboard cat",
-    // don't force the session to be saved back to the store
+    // don't force the session to be saved back to the store, even if the session
+    // was never modified during the request
     resave: false,
     // force a session that is uninitialized to be saved to the store
     saveUninitialized: true,
@@ -42,14 +46,23 @@ app.use(session({
     })
 }));
 // authentication middleware
-(0, auth_1.configureAuthentication)(passport);
+(0, auth_2.configureAuthentication)(passport);
 app.use(passport.initialize());
 app.use(passport.session());
+// ====================== CONFIGURE DATABASE ============================ //
+db.connect(process.env.DB_URI || "")
+    .then(() => {
+    console.log("connected to MongoDB...");
+})
+    .catch((err) => {
+    console.log("Connection error: " + err);
+    process.exit();
+});
 // =========================== ROUTERS ================================ //
 // account endpoints
-app.post("/signup", accounts_1.signup);
-app.post("/login", accounts_1.postLogin);
-app.get("/login", accounts_1.getLogin);
+app.post("/signup", auth_1.postSignup);
+app.post("/login", auth_1.postLogin);
+app.get("/login", auth_1.getLogin);
 // channel endpoints
 app.post("/accounts/:accountId/channels", ch.createChannel);
 app.post("/channels/:channelId", ch.emitContent);
