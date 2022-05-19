@@ -46,6 +46,7 @@ const configureAuthentication = (passport) => {
     // If success, it passes it to the callback function, so we can retrieve
     // the remaining user info from our database.
     passport.deserializeUser((id, done) => {
+        console.log("deserializeUser");
         //  get user from database
         radioHost_1.RadioHost.findById(id).exec((err, radioHOst) => {
             if (err) {

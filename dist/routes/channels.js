@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getChannels = exports.consumeContent = exports.emitContent = exports.createChannel = void 0;
+exports.getAllChannels = exports.getChannels = exports.consumeContent = exports.emitContent = exports.createChannel = void 0;
 const media_translation_1 = require("@google-cloud/media-translation");
 const error_1 = require("../error");
 const radioChannel_1 = require("../models/radioChannel");
@@ -22,47 +22,38 @@ const client = new media_translation_1.SpeechTranslationServiceClient();
 const stream = client.streamingTranslateSpeech();
 // ======================== DEFINE HANDLERS ========================== //
 const createChannel = (req, res, next) => {
-    console.log("createChannel");
     // radio host must be authenticated
     // TODO: require that radio host specifically is authenticated
     if (req.isUnauthenticated()) {
-        console.log("unauthenticated");
         return next(new error_1.Error(401, error_1.ErrorType.UNAUTHORIZED, 'client is not authenticated'));
     }
     // validate arguments
     try {
         (0, utils_1.validateArgument)(req.body, ["name"], ["string"], [true]);
-        console.log("valid params");
     }
     catch (e) {
         return next(e);
     }
     // get radio host id from url params
     let radioHostId = req.params.radioHostId;
-    console.log("radio host ID: " + radioHostId);
     // make sure radio host exists
     radioHost_1.RadioHost
         .findById(radioHostId)
         .exec((err, radioHost) => {
         if (err) {
-            console.log("error getting radio host");
             return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened'));
         }
         if (!radioHost) {
-            console.log("radio host doesn't exist");
             return next(new error_1.Error(404, error_1.ErrorType.NOT_FOUND, 'could not find radio host with id "' + radioHostId + '"'));
         }
-        console.log("found radio host with id " + radioHost._id);
         // make sure channel does not exist on database
         radioChannel_1.RadioChannel
             .findOne({ radio_host_id: radioHost._id, name: req.body.name })
             .exec((err, radioChannel) => __awaiter(void 0, void 0, void 0, function* () {
             if (err) {
-                console.log("error finding radio channel");
                 return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened'));
             }
             if (radioChannel) {
-                console.log("radio channel already exists");
                 return next(new error_1.Error(400, error_1.ErrorType.INVALID_REQUEST, 'host with id "' + radioHost._id + '" already has a channel with name "' + req.body.name + '"'));
             }
             // create radio channel
@@ -84,6 +75,41 @@ const createChannel = (req, res, next) => {
     });
 };
 exports.createChannel = createChannel;
+const getChannels = (req, res, next) => {
+    // validate arguments
+    try {
+        (0, utils_1.validateArgument)(req.body, ["radio_host_id"], ["string"], [true]);
+    }
+    catch (e) {
+        return next(e);
+    }
+    // get radio host id from url params
+    let radioHostId = req.params.radioHostId;
+    // make sure radio host exists
+    radioHost_1.RadioHost
+        .findById(radioHostId)
+        .exec((err, radioHost) => {
+        if (err) {
+            return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened'));
+        }
+        if (!radioHost) {
+            return next(new error_1.Error(404, error_1.ErrorType.NOT_FOUND, 'could not find radio host with id "' + radioHostId + '"'));
+        }
+        // find channels
+        radioChannel_1.RadioChannel
+            .find({ radio_host_id: radioHost._id })
+            .exec((err, radioChannels) => {
+            if (err) {
+                return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened'));
+            }
+            if (!radioChannels || radioChannels.length === 0) {
+                return next(new error_1.Error(400, error_1.ErrorType.INVALID_REQUEST, 'host with id "' + radioHost._id + '" has no channels'));
+            }
+            return res.end(JSON.stringify(radioChannels));
+        });
+    });
+};
+exports.getChannels = getChannels;
 const emitContent = (req, res) => {
     if (req.isAuthenticated()) {
         res.send('you hit getChannels\n');
@@ -94,13 +120,13 @@ const emitContent = (req, res) => {
 };
 exports.emitContent = emitContent;
 const consumeContent = (req, res) => {
-    res.end("consumeContent");
+    res.sendFile(__dirname + "/../channels.html");
 };
 exports.consumeContent = consumeContent;
-const getChannels = (req, res) => {
-    res.send('you hit getChannels\n');
+const getAllChannels = (req, res) => {
+    res.sendFile(__dirname + "/channels.html");
 };
-exports.getChannels = getChannels;
+exports.getAllChannels = getAllChannels;
 // app.post('/channel', (req, res) => {
 //     const audioContent = req.body.audio_content;
 //     // TODO: check that the audio content is not undefined

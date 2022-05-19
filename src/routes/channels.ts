@@ -96,6 +96,56 @@ const createChannel: RequestHandler = (req, res, next) => {
     })
 }
 
+const getChannels : RequestHandler = (req, res, next) => {
+    // validate arguments
+    try {
+        validateArgument(req.body, ["radio_host_id"], ["string"], [true]);
+    } catch(e) {
+        return next(e);
+    }
+
+    // get radio host id from url params
+    let radioHostId  = req.params.radioHostId;
+
+
+    // make sure radio host exists
+    RadioHost
+        .findById(radioHostId)
+        .exec((err, radioHost)  => {
+            if(err) {
+                return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
+            }
+
+            if(!radioHost) {
+                return next(new Error(
+                    404,
+                    ErrorType.NOT_FOUND,
+                    'could not find radio host with id "' + radioHostId + '"'
+                ));
+            }
+
+
+            // find channels
+            RadioChannel
+                .find({radio_host_id: radioHost._id})
+                .exec((err, radioChannels) => {
+                    if(err) {
+                        return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
+                    }
+                    
+                    if(!radioChannels || radioChannels.length === 0) {
+                        return next(new Error(
+                            400,
+                            ErrorType.INVALID_REQUEST,
+                            'host with id "' + radioHost._id + '" has no channels'
+                        ));
+                    }
+
+                    return res.end(JSON.stringify(radioChannels));
+            })
+    })
+}
+
 const emitContent: RequestHandler = (req, res) => {
     if(req.isAuthenticated()) {
         res.send('you hit getChannels\n')
@@ -105,12 +155,11 @@ const emitContent: RequestHandler = (req, res) => {
 }
 
 const consumeContent: RequestHandler = (req, res) => {
-    res.end("consumeContent");
-
+    res.sendFile(__dirname + "/../channels.html");
 }
 
-const getChannels: RequestHandler = (req, res) => {
-    res.send('you hit getChannels\n')
+const getAllChannels: RequestHandler = (req, res) => {
+    res.sendFile(__dirname + "/channels.html");
 }
 
 // ==================== EXPORT HANDLERS ====================== //
@@ -119,7 +168,8 @@ export {
     createChannel,
     emitContent,
     consumeContent,
-    getChannels
+    getChannels,
+    getAllChannels,
 };
 
 

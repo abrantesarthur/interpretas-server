@@ -6,6 +6,7 @@ require('dotenv').config();
 // import server libraries
 import express = require('express');
 import http = require('http');
+import {Server, Socket} from 'socket.io';
 
 // import server middlewares
 import bodyParser = require('body-parser');
@@ -26,18 +27,26 @@ import {v4 as uuid} from 'uuid';
 import { errorHandler } from './error';
 import {configureAuthentication} from './auth';
 import passport = require('passport');
+import { Stream } from 'stream';
 
-// ====================== CONFIGURE SERVER ============================ //
+// ==================== CONFIGURE HTTP SERVER ========================== //
 
-// instantiate the express server
+// instantiate the http server
 const app = express();
-const server = http.createServer(app);
+const httpServer = http.createServer(app);
+
+// instantiate the socket.io server
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+  }
+});
 
 // json middleware
 app.use(bodyParser.json())
 
 // session middleware
-app.use(session({
+const sessionMiddleware = session({
   // the function that generates unique session ids
   genid: (_) => uuid(),
   // the secret used to sign the session ID cookie
@@ -53,12 +62,41 @@ app.use(session({
   store: new SessionFileStore({
     ttl: 36000  // 10 hours
   })
-}))
+});
+app.use(sessionMiddleware);
 
 // authentication middleware
 configureAuthentication(passport);
 app.use(passport.initialize());
 app.use(passport.session());
+
+
+// ====================== CONFIGURE SOCKET.IO =========================== //
+
+// convert express middleware to a socket middleware
+const wrap = (middleware: any) => (socket:any, next:any) => middleware(socket.request, {}, next);
+
+// add session and authentication middlewares
+io.use(wrap(sessionMiddleware));
+io.use(wrap(passport.initialize()));
+io.use(wrap(passport.session()));
+
+
+io.on("connection", (socket) => {
+  console.log("received connection");
+  let request = socket.request as express.Request;
+
+  if(request.isAuthenticated()) {
+    console.log("is authenticated")
+  } else {
+    console.log("is not authenticated")
+  }
+  console.log(request.session);
+
+  // socket.disconnect()
+
+})
+
 
 // ====================== CONFIGURE DATABASE ============================ //
 
@@ -80,9 +118,10 @@ app.get("/login", getLogin);
 
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
+app.post("/accounts/:radioHostId/channels", ch.getChannels);
 app.post("/channels/:radioChannelId", ch.emitContent);
 app.get("channels/:radioChannelId", ch.consumeContent);
-app.get("/", ch.getChannels);
+app.get("/", ch.getAllChannels);
 
 // =========================== START SERVER ================================ //
 
@@ -91,6 +130,6 @@ app.use(errorHandler)
 
 const port = Number(process.env.PORT);
 const hostname = process.env.HOSTNAME;
-server.listen(port, hostname, () => {
+httpServer.listen(port, hostname, () => {
     console.log(`server running on http://${hostname}:${port}/`);
 })
