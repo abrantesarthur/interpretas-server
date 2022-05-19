@@ -88,8 +88,11 @@ const postLogin = (req, res, next) => {
                 };
                 return next(e);
             }
-            // TODO: consider redirecting instead
-            return res.send("You are authenticated and logged in!\n");
+            return res.send(JSON.stringify({
+                id: user._id,
+                name: user.name,
+                email: user.email,
+            }));
         });
     })(req, res, next);
 };

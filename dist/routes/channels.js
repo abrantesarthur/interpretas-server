@@ -76,13 +76,7 @@ const createChannel = (req, res, next) => {
 };
 exports.createChannel = createChannel;
 const getChannels = (req, res, next) => {
-    // validate arguments
-    try {
-        (0, utils_1.validateArgument)(req.body, ["radio_host_id"], ["string"], [true]);
-    }
-    catch (e) {
-        return next(e);
-    }
+    console.log("getChannels");
     // get radio host id from url params
     let radioHostId = req.params.radioHostId;
     // make sure radio host exists
@@ -105,7 +99,15 @@ const getChannels = (req, res, next) => {
             if (!radioChannels || radioChannels.length === 0) {
                 return next(new error_1.Error(400, error_1.ErrorType.INVALID_REQUEST, 'host with id "' + radioHost._id + '" has no channels'));
             }
-            return res.end(JSON.stringify(radioChannels));
+            let channels = [];
+            radioChannels.forEach((rc) => {
+                channels.push({
+                    "id": rc._id,
+                    "radio_host_id": rc.radio_host_id,
+                    "name": rc.name,
+                });
+            });
+            return res.end(JSON.stringify(channels));
         });
     });
 };

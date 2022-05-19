@@ -6,7 +6,7 @@ require('dotenv').config();
 // import server libraries
 import express = require('express');
 import http = require('http');
-import {Server, Socket} from 'socket.io';
+import {Server} from 'socket.io';
 
 // import server middlewares
 import bodyParser = require('body-parser');
@@ -27,20 +27,12 @@ import {v4 as uuid} from 'uuid';
 import { errorHandler } from './error';
 import {configureAuthentication} from './auth';
 import passport = require('passport');
-import { Stream } from 'stream';
 
 // ==================== CONFIGURE HTTP SERVER ========================== //
 
 // instantiate the http server
 const app = express();
 const httpServer = http.createServer(app);
-
-// instantiate the socket.io server
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  }
-});
 
 // json middleware
 app.use(bodyParser.json())
@@ -73,6 +65,15 @@ app.use(passport.session());
 
 // ====================== CONFIGURE SOCKET.IO =========================== //
 
+// instantiate the socket.io server
+const io = new Server(httpServer, {
+  path: "/channels/",
+  cors: {
+    origin: "*",
+  }
+});
+
+
 // convert express middleware to a socket middleware
 const wrap = (middleware: any) => (socket:any, next:any) => middleware(socket.request, {}, next);
 
@@ -85,6 +86,8 @@ io.use(wrap(passport.session()));
 io.on("connection", (socket) => {
   console.log("received connection");
   let request = socket.request as express.Request;
+
+  console.log(socket.handshake.query.channel_id);
 
   if(request.isAuthenticated()) {
     console.log("is authenticated")
@@ -118,7 +121,7 @@ app.get("/login", getLogin);
 
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
-app.post("/accounts/:radioHostId/channels", ch.getChannels);
+app.get("/accounts/:radioHostId/channels", ch.getChannels);
 app.post("/channels/:radioChannelId", ch.emitContent);
 app.get("channels/:radioChannelId", ch.consumeContent);
 app.get("/", ch.getAllChannels);

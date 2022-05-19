@@ -96,14 +96,8 @@ const createChannel: RequestHandler = (req, res, next) => {
     })
 }
 
-const getChannels : RequestHandler = (req, res, next) => {
-    // validate arguments
-    try {
-        validateArgument(req.body, ["radio_host_id"], ["string"], [true]);
-    } catch(e) {
-        return next(e);
-    }
-
+const getChannels : RequestHandler = (req, res, next) => {    
+    console.log("getChannels");
     // get radio host id from url params
     let radioHostId  = req.params.radioHostId;
 
@@ -141,7 +135,16 @@ const getChannels : RequestHandler = (req, res, next) => {
                         ));
                     }
 
-                    return res.end(JSON.stringify(radioChannels));
+                    let channels : any[] = [];
+                    radioChannels.forEach((rc) => {
+                        channels.push({
+                            "id": rc._id,
+                            "radio_host_id": rc.radio_host_id,
+                            "name": rc.name,
+                        });
+                    })
+
+                    return res.end(JSON.stringify(channels));
             })
     })
 }

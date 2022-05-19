@@ -26,12 +26,6 @@ const passport = require("passport");
 // instantiate the http server
 const app = express();
 const httpServer = http.createServer(app);
-// instantiate the socket.io server
-const io = new socket_io_1.Server(httpServer, {
-    cors: {
-        origin: "*",
-    }
-});
 // json middleware
 app.use(bodyParser.json());
 // session middleware
@@ -58,6 +52,13 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 // ====================== CONFIGURE SOCKET.IO =========================== //
+// instantiate the socket.io server
+const io = new socket_io_1.Server(httpServer, {
+    path: "/channels/",
+    cors: {
+        origin: "*",
+    }
+});
 // convert express middleware to a socket middleware
 const wrap = (middleware) => (socket, next) => middleware(socket.request, {}, next);
 // add session and authentication middlewares
@@ -67,6 +68,7 @@ io.use(wrap(passport.session()));
 io.on("connection", (socket) => {
     console.log("received connection");
     let request = socket.request;
+    console.log(socket.handshake.query.channel_id);
     if (request.isAuthenticated()) {
         console.log("is authenticated");
     }
@@ -92,7 +94,7 @@ app.post("/login", auth_1.postLogin);
 app.get("/login", auth_1.getLogin);
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
-app.post("/accounts/:radioHostId/channels", ch.getChannels);
+app.get("/accounts/:radioHostId/channels", ch.getChannels);
 app.post("/channels/:radioChannelId", ch.emitContent);
 app.get("channels/:radioChannelId", ch.consumeContent);
 app.get("/", ch.getAllChannels);
