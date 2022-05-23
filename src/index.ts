@@ -65,39 +65,38 @@ app.use(passport.session());
 
 // ====================== CONFIGURE SOCKET.IO =========================== //
 
-// instantiate the socket.io server
+// instantiate the main socket.io server instance
 const io = new Server(httpServer, {
-  path: "/channels/",
   cors: {
     origin: "*",
   }
 });
 
+// instantiate socket.io channels instance
+const channelsIO = io.of("/channels");
 
 // convert express middleware to a socket middleware
 const wrap = (middleware: any) => (socket:any, next:any) => middleware(socket.request, {}, next);
 
 // add session and authentication middlewares
-io.use(wrap(sessionMiddleware));
-io.use(wrap(passport.initialize()));
-io.use(wrap(passport.session()));
+channelsIO.use(wrap(sessionMiddleware));
+channelsIO.use(wrap(passport.initialize()));
+channelsIO.use(wrap(passport.session()));
 
 
-io.on("connection", (socket) => {
-  console.log("received connection");
+channelsIO.on("connection", (socket) => {
+  console.log("received connection for channel id " + socket.handshake.query.channel_id);
+  
+  // only accept authenticated requests
   let request = socket.request as express.Request;
-
-  console.log(socket.handshake.query.channel_id);
-
-  if(request.isAuthenticated()) {
-    console.log("is authenticated")
+  if(request.isUnauthenticated()) {
+    socket.disconnect();
   } else {
-    console.log("is not authenticated")
-  }
-  console.log(request.session);
-
-  // socket.disconnect()
-
+    socket.on("audioContent", (audioContent) => {
+      console.log("received audio content");
+      console.log(audioContent)
+    })
+  }  
 })
 
 
