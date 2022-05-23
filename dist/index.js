@@ -91,7 +91,7 @@ channelsIO.on("connection", (socket) => __awaiter(void 0, void 0, void 0, functi
     if (request.isAuthenticated()) {
         // get user id
         let userID = request.session.passport.user;
-        // get user's channels
+        // TODO get user's channels and make sure he's the owner
     }
     // save channel ID in session for easy access in subsequent requests
     request.session.channelID = channel_id;
@@ -102,7 +102,7 @@ channelsIO.on("connection", (socket) => __awaiter(void 0, void 0, void 0, functi
         if (request.isUnauthenticated()) {
             return;
         }
-        return ch.emitAudioContent(audioContent);
+        return ch.emitAudioContent(audioContent, socket);
     });
     // notify client that they can start sending requests
     socket.emit("connected");
@@ -124,7 +124,6 @@ app.get("/login", auth_1.getLogin);
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
 app.get("/accounts/:radioHostId/channels", ch.getChannels);
-app.post("/channels/:radioChannelId", ch.emitAudioContent);
 app.get("channels/:radioChannelId", ch.consumeAudioContent);
 app.get("/", ch.getAllChannels);
 // =========================== START SERVER ================================ //

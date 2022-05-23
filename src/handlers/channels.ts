@@ -1,5 +1,6 @@
 import { SpeechTranslationServiceClient } from '@google-cloud/media-translation';
 import { RequestHandler } from 'express';
+import { Socket } from 'socket.io';
 import { Error, ErrorType } from '../error';
 import { RadioChannel } from '../models/radioChannel';
 import { RadioHost } from '../models/radioHost';
@@ -149,9 +150,11 @@ const getChannels : RequestHandler = (req, res, next) => {
     })
 }
 
-const emitAudioContent = (audioContent: string) => {
-    console.log("emitAudioContent");
-    // console.log(audioContent)
+const emitAudioContent = (audioContent: string, socket: Socket) => {
+    // TODO: translate then emit to listeners
+
+    // TODO: instead of socket, broadcast it to everyone in the room
+    socket.emit("received audio content");
 }
 
 const consumeAudioContent: RequestHandler = (req, res) => {

@@ -127,7 +127,8 @@ channelsIO.on("connection", async (socket) => {
       return;
     }
 
-    return ch.emitAudioContent(audioContent)
+
+    return ch.emitAudioContent(audioContent, socket);
   })
 
   // notify client that they can start sending requests
@@ -156,7 +157,6 @@ app.get("/login", getLogin);
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
 app.get("/accounts/:radioHostId/channels", ch.getChannels);
-app.post("/channels/:radioChannelId", ch.emitAudioContent);
 app.get("channels/:radioChannelId", ch.consumeAudioContent);
 app.get("/", ch.getAllChannels);
 

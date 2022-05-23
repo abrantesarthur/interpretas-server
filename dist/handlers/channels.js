@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getChannelsByUserID = exports.getAllChannels = exports.getChannels = exports.consumeAudioContent = exports.emitAudioContent = exports.createChannel = void 0;
+exports.getAllChannels = exports.getChannels = exports.consumeAudioContent = exports.emitAudioContent = exports.createChannel = void 0;
 const media_translation_1 = require("@google-cloud/media-translation");
 const error_1 = require("../error");
 const radioChannel_1 = require("../models/radioChannel");
@@ -75,26 +75,29 @@ const createChannel = (req, res, next) => {
     });
 };
 exports.createChannel = createChannel;
-const getChannelsByUserID = (userID) => {
+const getChannels = (req, res, next) => {
+    console.log("getChannels");
+    // get radio host id from url params
+    let radioHostId = req.params.radioHostId;
     // make sure radio host exists
     radioHost_1.RadioHost
-        .findById(userID)
+        .findById(radioHostId)
         .exec((err, radioHost) => {
         if (err) {
-            throw new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened');
+            return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened'));
         }
         if (!radioHost) {
-            throw new error_1.Error(404, error_1.ErrorType.NOT_FOUND, 'could not find radio host with id "' + userID + '"');
+            return next(new error_1.Error(404, error_1.ErrorType.NOT_FOUND, 'could not find radio host with id "' + radioHostId + '"'));
         }
         // find channels
         radioChannel_1.RadioChannel
             .find({ radio_host_id: radioHost._id })
             .exec((err, radioChannels) => {
             if (err) {
-                throw new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened');
+                return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened'));
             }
             if (!radioChannels || radioChannels.length === 0) {
-                throw new error_1.Error(400, error_1.ErrorType.INVALID_REQUEST, 'host with id "' + radioHost._id + '" has no channels');
+                return next(new error_1.Error(400, error_1.ErrorType.INVALID_REQUEST, 'host with id "' + radioHost._id + '" has no channels'));
             }
             let channels = [];
             radioChannels.forEach((rc) => {
@@ -104,29 +107,15 @@ const getChannelsByUserID = (userID) => {
                     "name": rc.name,
                 });
             });
-            return channels;
+            return res.end(JSON.stringify(channels));
         });
     });
 };
-exports.getChannelsByUserID = getChannelsByUserID;
-const getChannels = (req, res, next) => {
-    console.log("getChannels");
-    // get radio host id from url params
-    let radioHostId = req.params.radioHostId;
-    try {
-        let channels = getChannelsByUserID(radioHostId);
-        console.log(channels);
-        return res.send(JSON.stringify(channels));
-    }
-    catch (err) {
-        console.log(err);
-        return next(err);
-    }
-};
 exports.getChannels = getChannels;
-const emitAudioContent = (audioContent) => {
-    console.log("emitAudioContent");
-    // console.log(audioContent)
+const emitAudioContent = (audioContent, socket) => {
+    // TODO: translate then emit to listeners
+    // TODO: instead of socket, broadcast it to everyone in the room
+    socket.emit("received audio content");
 };
 exports.emitAudioContent = emitAudioContent;
 const consumeAudioContent = (req, res) => {
