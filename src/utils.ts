@@ -1,6 +1,14 @@
 import { assert } from 'console';
 import {Error, ErrorType} from './error';
 
+
+export const isString = (arg: any) : arg is string => {
+  if(typeof arg == "string") {
+    return true;
+  }
+  return false;
+}
+
 export const validateArgument = (
   obj: any,
   validKeys: string[],

@@ -46,16 +46,15 @@ const configureAuthentication = (passport) => {
     // If success, it passes it to the callback function, so we can retrieve
     // the remaining user info from our database.
     passport.deserializeUser((id, done) => {
-        console.log("deserializeUser");
         //  get user from database
-        radioHost_1.RadioHost.findById(id).exec((err, radioHOst) => {
+        radioHost_1.RadioHost.findById(id).exec((err, radioHost) => {
             if (err) {
                 return done(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, "something wrong happened"));
             }
-            if (!radioHOst) {
+            if (!radioHost) {
                 return done(new error_1.Error(401, error_1.ErrorType.UNAUTHORIZED, 'client is not authenticated'));
             }
-            done(null, radioHOst);
+            done(null, radioHost);
         });
     });
 };

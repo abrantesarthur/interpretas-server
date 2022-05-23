@@ -93,7 +93,7 @@ const postLogin : RequestHandler = (req, res, next) => {
  
         // if the 'email' and 'password' are successfully validated by the local
         // strategy in index.ts, calling req.login() will invoke passport.serializeUser(),
-        // defined in index.ts, which, in turn, saves user info in the session.
+        // defined in auth.ts, which, in turn, saves user info in the session.
         // Then, the callback passed here is invoked.
         // TODO: handle error case.
         req.login(user, (err) => {

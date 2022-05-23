@@ -149,15 +149,12 @@ const getChannels : RequestHandler = (req, res, next) => {
     })
 }
 
-const emitContent: RequestHandler = (req, res) => {
-    if(req.isAuthenticated()) {
-        res.send('you hit getChannels\n')
-    } else {
-        res.send('you are not authenticated\n')
-    }
+const emitAudioContent = (audioContent: string) => {
+    console.log("emitAudioContent");
+    // console.log(audioContent)
 }
 
-const consumeContent: RequestHandler = (req, res) => {
+const consumeAudioContent: RequestHandler = (req, res) => {
     res.sendFile(__dirname + "/../channels.html");
 }
 
@@ -169,8 +166,8 @@ const getAllChannels: RequestHandler = (req, res) => {
 
 export {
     createChannel,
-    emitContent,
-    consumeContent,
+    emitAudioContent,
+    consumeAudioContent,
     getChannels,
     getAllChannels,
 };

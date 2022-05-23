@@ -66,9 +66,8 @@ export const configureAuthentication = (passport: PassportStatic) => {
     // If success, it passes it to the callback function, so we can retrieve
     // the remaining user info from our database.
     passport.deserializeUser((id, done) => {
-        console.log("deserializeUser")
         //  get user from database
-        RadioHost.findById(id).exec((err, radioHOst) => {
+        RadioHost.findById(id).exec((err, radioHost) => {
             if(err) {
                 return done(new Error(
                     500,
@@ -77,7 +76,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
                 ));
             }
 
-            if(!radioHOst) {
+            if(!radioHost) {
                 return done(new Error(
                     401,
                     ErrorType.UNAUTHORIZED,
@@ -85,7 +84,7 @@ export const configureAuthentication = (passport: PassportStatic) => {
                 ));
             }
 
-            done(null, radioHOst);
+            done(null, radioHost);
         })
     })
 }

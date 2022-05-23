@@ -1,8 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateArgument = void 0;
+exports.validateArgument = exports.isString = void 0;
 const console_1 = require("console");
 const error_1 = require("./error");
+const isString = (arg) => {
+    if (typeof arg == "string") {
+        return true;
+    }
+    return false;
+};
+exports.isString = isString;
 const validateArgument = (obj, validKeys, expectedTypes, mustBePresent) => {
     (0, console_1.assert)(validKeys.length === expectedTypes.length);
     (0, console_1.assert)(validKeys.length === mustBePresent.length);

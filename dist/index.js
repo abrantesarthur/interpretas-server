@@ -1,4 +1,13 @@
 'use strict';
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // load configuration variables from .env file
 require('dotenv').config();
@@ -12,8 +21,8 @@ const session = require("express-session");
 const sessionFileStore = require("session-file-store");
 const SessionFileStore = sessionFileStore(session);
 // import endpoint handlers
-const auth_1 = require("./routes/auth");
-const ch = require("./routes/channels");
+const auth_1 = require("./handlers/auth");
+const ch = require("./handlers/channels");
 // import database
 // TODO: consider moving db out of mongoDB Atlas
 const db = require("mongoose");
@@ -22,6 +31,7 @@ const uuid_1 = require("uuid");
 const error_1 = require("./error");
 const auth_2 = require("./auth");
 const passport = require("passport");
+const utils_1 = require("./utils");
 // ==================== CONFIGURE HTTP SERVER ========================== //
 // instantiate the http server
 const app = express();
@@ -53,33 +63,50 @@ app.use(passport.initialize());
 app.use(passport.session());
 // ====================== CONFIGURE SOCKET.IO =========================== //
 // instantiate the main socket.io server instance
-const io = new socket_io_1.Server(httpServer, {
+const channelsIO = new socket_io_1.Server(httpServer, {
+    path: "/channels",
     cors: {
         origin: "*",
     }
 });
-// instantiate socket.io channels instance
-const channelsIO = io.of("/channels");
 // convert express middleware to a socket middleware
 const wrap = (middleware) => (socket, next) => middleware(socket.request, {}, next);
 // add session and authentication middlewares
 channelsIO.use(wrap(sessionMiddleware));
 channelsIO.use(wrap(passport.initialize()));
 channelsIO.use(wrap(passport.session()));
-channelsIO.on("connection", (socket) => {
-    console.log("received connection for channel id " + socket.handshake.query.channel_id);
-    // only accept authenticated requests
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+// connection event
+channelsIO.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     let request = socket.request;
-    if (request.isUnauthenticated()) {
+    // make sure a channel_id was passed and is a string
+    let channel_id = socket.handshake.query.channel_id;
+    if (!(0, utils_1.isString)(channel_id)) {
         socket.disconnect();
+        return;
     }
-    else {
-        socket.on("audioContent", (audioContent) => {
-            console.log("received audio content");
-            console.log(audioContent);
-        });
+    // if this is an authenticated request, make sure user who connected owns the channel
+    if (request.isAuthenticated()) {
+        // get user id
+        let userID = request.session.passport.user;
+        // get user's channels
     }
-});
+    // save channel ID in session for easy access in subsequent requests
+    request.session.channelID = channel_id;
+    // register event handlers
+    socket.on("audioContent", (audioContent) => {
+        console.log(request.session);
+        // user must be authenticated to emit audio content
+        if (request.isUnauthenticated()) {
+            return;
+        }
+        return ch.emitAudioContent(audioContent);
+    });
+    // notify client that they can start sending requests
+    socket.emit("connected");
+}));
 // ====================== CONFIGURE DATABASE ============================ //
 db.connect(process.env.DB_URI || "")
     .then(() => {
@@ -97,8 +124,8 @@ app.get("/login", auth_1.getLogin);
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
 app.get("/accounts/:radioHostId/channels", ch.getChannels);
-app.post("/channels/:radioChannelId", ch.emitContent);
-app.get("channels/:radioChannelId", ch.consumeContent);
+app.post("/channels/:radioChannelId", ch.emitAudioContent);
+app.get("channels/:radioChannelId", ch.consumeAudioContent);
 app.get("/", ch.getAllChannels);
 // =========================== START SERVER ================================ //
 // error handling middleware must be defined last

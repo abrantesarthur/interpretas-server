@@ -15,8 +15,8 @@ import sessionFileStore = require('session-file-store');
 const SessionFileStore = sessionFileStore(session);
 
 // import endpoint handlers
-import { getLogin, postLogin, postSignup } from './routes/auth';
-import * as ch from './routes/channels';
+import { getLogin, postLogin, postSignup } from './handlers/auth';
+import * as ch from './handlers/channels';
 
 // import database
 // TODO: consider moving db out of mongoDB Atlas
@@ -27,6 +27,18 @@ import {v4 as uuid} from 'uuid';
 import { errorHandler } from './error';
 import {configureAuthentication} from './auth';
 import passport = require('passport');
+import {isString} from "./utils";
+
+// ====================== CONFIGURE SESSIONS =========================== //
+
+// use typescript's Declaration Merging to extend optional session properties
+declare module 'express-session' {
+  interface SessionData {
+      channelID: string;
+      passport: any;
+  }
+}
+
 
 // ==================== CONFIGURE HTTP SERVER ========================== //
 
@@ -66,14 +78,12 @@ app.use(passport.session());
 // ====================== CONFIGURE SOCKET.IO =========================== //
 
 // instantiate the main socket.io server instance
-const io = new Server(httpServer, {
+const channelsIO = new Server(httpServer, {
+  path: "/channels",
   cors: {
     origin: "*",
   }
 });
-
-// instantiate socket.io channels instance
-const channelsIO = io.of("/channels");
 
 // convert express middleware to a socket middleware
 const wrap = (middleware: any) => (socket:any, next:any) => middleware(socket.request, {}, next);
@@ -83,20 +93,45 @@ channelsIO.use(wrap(sessionMiddleware));
 channelsIO.use(wrap(passport.initialize()));
 channelsIO.use(wrap(passport.session()));
 
+function delay(ms: number) {
+  return new Promise( resolve => setTimeout(resolve, ms) );
+}
 
-channelsIO.on("connection", (socket) => {
-  console.log("received connection for channel id " + socket.handshake.query.channel_id);
-  
-  // only accept authenticated requests
+// connection event
+channelsIO.on("connection", async (socket) => {
   let request = socket.request as express.Request;
-  if(request.isUnauthenticated()) {
+
+  // make sure a channel_id was passed and is a string
+  let channel_id = socket.handshake.query.channel_id;
+  if(!isString(channel_id)) {
     socket.disconnect();
-  } else {
-    socket.on("audioContent", (audioContent) => {
-      console.log("received audio content");
-      console.log(audioContent)
-    })
-  }  
+    return;
+  }
+
+  // if this is an authenticated request, make sure user who connected owns the channel
+  if(request.isAuthenticated()) {
+    // get user id
+    let userID = request.session.passport.user;
+
+    // TODO get user's channels and make sure he's the owner
+  }
+
+  // save channel ID in session for easy access in subsequent requests
+  request.session.channelID = channel_id;
+
+  // register event handlers
+  socket.on("audioContent", (audioContent) => {
+    console.log(request.session);
+    // user must be authenticated to emit audio content
+    if(request.isUnauthenticated()) {
+      return;
+    }
+
+    return ch.emitAudioContent(audioContent)
+  })
+
+  // notify client that they can start sending requests
+  socket.emit("connected");
 })
 
 
@@ -121,8 +156,8 @@ app.get("/login", getLogin);
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
 app.get("/accounts/:radioHostId/channels", ch.getChannels);
-app.post("/channels/:radioChannelId", ch.emitContent);
-app.get("channels/:radioChannelId", ch.consumeContent);
+app.post("/channels/:radioChannelId", ch.emitAudioContent);
+app.get("channels/:radioChannelId", ch.consumeAudioContent);
 app.get("/", ch.getAllChannels);
 
 // =========================== START SERVER ================================ //
