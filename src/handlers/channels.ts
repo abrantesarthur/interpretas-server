@@ -5,6 +5,7 @@ import { Error, ErrorType } from '../error';
 import { RadioChannel } from '../models/radioChannel';
 import { RadioHost } from '../models/radioHost';
 import { validateArgument } from '../utils';
+import express = require('express');
 
 
 // ================ CONFIGURE MEDIA TRANSLATION API ================== //
@@ -151,9 +152,17 @@ const getChannels : RequestHandler = (req, res, next) => {
 }
 
 const emitAudioContent = (audioContent: string, socket: Socket) => {
+    let request = socket.request as express.Request;
+
+    // user must be authenticated to emit audio content
+    if(request.isUnauthenticated()) {
+      return;
+    }
+
     // TODO: translate then emit to listeners
 
-    // TODO: instead of socket, broadcast it to everyone in the room
+    // broadcast translation to channel listeners
+    socket.to(request.session.channelID || "").emit("translation");
     socket.emit("received audio content");
 }
 

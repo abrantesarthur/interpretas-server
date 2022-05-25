@@ -104,7 +104,8 @@ channelsIO.on("connection", async (socket) => {
 
   // make sure a channel_id was passed and is a string
   let channel_id = socket.handshake.query.channel_id;
-  if(!isString(channel_id)) {
+
+  if(!isString(channel_id) || channel_id.length == 0) {
     socket.disconnect();
     return;
   }
@@ -120,22 +121,14 @@ channelsIO.on("connection", async (socket) => {
     request.session.firstRequest = true;
   }
 
+  // subscribe socket to the channel
+  socket.join(channel_id);
+
   // save channel ID in session for easy access in subsequent events
   request.session.channelID = channel_id;
 
-  // 
-
   // register event handlers
-  socket.on("audioContent", (audioContent) => {
-    console.log(request.session);
-    // user must be authenticated to emit audio content
-    if(request.isUnauthenticated()) {
-      return;
-    }
-
-    
-    return ch.emitAudioContent(audioContent, socket);
-  })
+  socket.on("audioContent", (audioContent) => ch.emitAudioContent(audioContent, socket));
 
   // notify client that they can start sending requests
   socket.emit("connected");
