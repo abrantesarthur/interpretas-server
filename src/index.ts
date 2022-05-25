@@ -36,6 +36,7 @@ declare module 'express-session' {
   interface SessionData {
       channelID: string;
       passport: any;
+      firstRequest: boolean;
   }
 }
 
@@ -111,13 +112,18 @@ channelsIO.on("connection", async (socket) => {
   // if this is an authenticated request, make sure user who connected owns the channel
   if(request.isAuthenticated()) {
     // get user id
-    let userID = request.session.passport.user;
+    // let userID = request.session.passport.user;
 
     // TODO get user's channels and make sure he's the owner
+
+    // set flag to true, so we handle translation API semantics correctly
+    request.session.firstRequest = true;
   }
 
-  // save channel ID in session for easy access in subsequent requests
+  // save channel ID in session for easy access in subsequent events
   request.session.channelID = channel_id;
+
+  // 
 
   // register event handlers
   socket.on("audioContent", (audioContent) => {
@@ -127,7 +133,7 @@ channelsIO.on("connection", async (socket) => {
       return;
     }
 
-
+    
     return ch.emitAudioContent(audioContent, socket);
   })
 
