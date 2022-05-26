@@ -153,10 +153,18 @@ const getChannels : RequestHandler = (req, res, next) => {
 const emitAudioContent = (audioContent: string, socket: Socket) => {
     let request = socket.request as express.Request;
 
+    // TODO: consider accumulating the output then send it
+
     // user must be authenticated to emit audio content
     if(request.isUnauthenticated()) {
       return;
     }
+
+    // make sure channel id is defined within the session
+    if(request.session.channelID === undefined || request.session.channelID.length === 0) {
+        return;
+    }
+    let chID : string = request.session.channelID;
 
     const config = {
         // TODO: make dynamic
@@ -170,44 +178,35 @@ const emitAudioContent = (audioContent: string, socket: Socket) => {
         singleUtterance: false,       
     };
 
-    // TODO: this is causing a memory leak: many listeners are being set
-    stream.on('data', data => {
-        res.end(`\n${data.result.textTranslationResult.translation}`);
-    });
+    // configure translation listeners only once
+    if(request.session.firstRequest === true) {
+        // broadcasts translation results to all clients subscribed to the room
+        stream.on('data', data => {
+            socket.to(chID).emit(data);
+        });
+        
+        // register error listener
+        stream.on('error', e => {
+            // TODO: how do we handle errors?
+        })
 
-    // listen for google Media Translation errors and send to client
-    stream.on('error', e => {
-        res.status(500);
-        res.send("failed to translate audio");
-    })
-
-
-    if(!stream.destroyed) {
-        // First request needs to have only a streaming config, no data.
-        if(isFirst) {
-        console.log("\nfirst");
-            // listen for google Media Translation responses and send to client
-
+        // send first request, which only needs streaming config
         stream.write({
             streamingConfig: config,
             audioContent: null,
         });
 
-        isFirst = false;
-        }
+        request.session.firstRequest = false;
 
-        stream.write({
+        // TODO: probably have to synchronously save sesssion here, instead
+        // of waiting until the end of request.
+    }
+
+    // subsequent requests need audioContent
+    stream.write({
         streamingConfig: config,
         audioContent: audioContent,
-        });
-    }
-
-
-    // broadcast translation to channel listeners
-    let chID = request.session.channelID;
-    if(chID !== undefined && chID.length > 0) {
-        socket.to(chID).emit("translation");
-    }
+    });
 }
 
 const consumeAudioContent: RequestHandler = (req, res) => {
@@ -228,10 +227,3 @@ export {
     getAllChannels,
 };
 
-
-
-const audioContent = req.body.audio_content;
-
-// TODO: check that the audio content is not undefined
-
-// TODO: accumulate the output then send it

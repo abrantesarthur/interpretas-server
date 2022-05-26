@@ -1,7 +1,19 @@
+import { SpeechTranslationServiceClient } from '@google-cloud/media-translation';
 import { Socket } from "socket.io";
 import express = require('express');
 import { isString } from "../utils";
 import * as ch from '../handlers/channels';
+
+// ================ CONFIGURE MEDIA TRANSLATION API ================== //
+  
+// Creates a client
+const client = new SpeechTranslationServiceClient();
+
+// Create a recognize stream
+const stream = client.streamingTranslateSpeech();
+
+
+// ================ CONFIGURE SOCKET CONNECTION ================== //
 
 export const configureSocketConnection = async (socket: Socket) => {
     let request = socket.request as express.Request;
@@ -30,6 +42,8 @@ export const configureSocketConnection = async (socket: Socket) => {
   
     // save channel ID in session for easy access in subsequent events
     request.session.channelID = channel_id;
+
+    // register translation events
   
     // register event handlers
     socket.on("audioContent", (audioContent) => ch.emitAudioContent(audioContent, socket));
