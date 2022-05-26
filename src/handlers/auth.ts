@@ -69,7 +69,7 @@ const postSignup : RequestHandler = async (req, res, next) => {
 }
 
 const getLogin : RequestHandler = (req, res) => {
-    res.end("\ngetLogin\n");
+    res.sendFile(__dirname + "/pages/login.html");
 }
 
 const postLogin : RequestHandler = (req, res, next) => {

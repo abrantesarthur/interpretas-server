@@ -114,7 +114,6 @@ const getChannels = (req, res, next) => {
 exports.getChannels = getChannels;
 const emitAudioContent = (audioContent, socket) => {
     let request = socket.request;
-    // TODO: consider accumulating the output then send it
     // user must be authenticated to emit audio content
     if (request.isUnauthenticated()) {
         return;
@@ -140,16 +139,12 @@ const emitAudioContent = (audioContent, socket) => {
         // broadcasts translation results to all clients subscribed to the room
         stream.on('data', d => {
             const { error, result, _ } = d;
-            // socket.to(chID).emit(data);
-            // socket.to(chID).emit("received audio content", data);
             if (error !== null) {
             }
-            console.log(d);
-            console.log(error);
-            console.log(result);
-            if (result.isFinal === true) {
-                socket.emit("translatedAudioContent", result.textTranslationResult.translation);
-            }
+            // TODO: accumulate
+            socket.emit("translatedAudioContent", result.textTranslationResult.translation);
+            // TODO: send only to children
+            // socket.to(chID).emit("received audio content", data);
         });
         // register error listener
         stream.on('error', e => {

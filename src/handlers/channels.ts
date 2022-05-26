@@ -153,8 +153,6 @@ const getChannels : RequestHandler = (req, res, next) => {
 const emitAudioContent = (audioContent: string, socket: Socket) => {
     let request = socket.request as express.Request;
 
-    // TODO: consider accumulating the output then send it
-
     // user must be authenticated to emit audio content
     if(request.isUnauthenticated()) {
       return;

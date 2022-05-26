@@ -56,7 +56,7 @@ const postSignup = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.postSignup = postSignup;
 const getLogin = (req, res) => {
-    res.end("\ngetLogin\n");
+    res.sendFile(__dirname + "/pages/login.html");
 };
 exports.getLogin = getLogin;
 const postLogin = (req, res, next) => {
