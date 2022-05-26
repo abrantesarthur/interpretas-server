@@ -73,6 +73,7 @@ const getLogin : RequestHandler = (req, res) => {
 }
 
 const postLogin : RequestHandler = (req, res, next) => {
+    console.log(req.body);
     // validate argument
     try {
         validateArgument(

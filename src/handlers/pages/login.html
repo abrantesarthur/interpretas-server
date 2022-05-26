@@ -5,19 +5,81 @@
   </head>
   <body>
     <ul id="messages"></ul>
-    <form id="login" action="" method="post">
+    <form id="loginForm" action="" method="post">
       <div class="column">
         <label>Email</label>   
         <input class="input" type="text" placeholder="example@gmail.com" name="email" required>  
         <label>Password</label>   
         <input class="input" type="password" name="password" required>
-        <button>Login</button>
+        <button id="loginButton" type="submit">Login</button>
       </div>
     </form>
   </body>
   <script>
+    const loginForm = document.getElementById("loginForm");
+
     // TODO: define target form action dynamically
     let baseURI = "http://localhost:3000";
-    document.getElementById("login").action = baseURI + "/login";
+    loginForm.action = baseURI + "/login";
+
+    function buildJson(form) {
+      const json = {};
+      for(const pair of new FormData(form)) {
+        json[pair[0]] = pair[1];
+      }
+      return json;
+    }
+
+    function buildHeaders() {
+      headers = {};
+      headers["Content-Type"] = "application/json";
+      return headers;
+    }
+
+    function post(uri, headers, body) {
+      if(!ui || !headers || !body) {
+        throw new Error("One or more post() parameters was not passed");
+      }
+      try {
+        const rawResponse = await fetch(uri, {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify(body)
+        });
+        const content = await rawResponse.JSON();
+        return content;
+      } catch(e) {
+        console.error(`Error at POST request: ${e}`);
+        throw e;
+      }
+    }
+
+    // define submiteForm function that submits data as JSON
+    function submitForm(event, form) {
+      // prevent reloadling the page
+      event.preventDefault();
+
+      // prevent user interaction to prevent double submissions
+      const btn = document.getElementById("loginButton");
+      btn.disabled = true;
+      setTimeout(() => btn.disabled = false, 2000);
+
+      // build JSON body
+      const json = buildJson(form);
+
+      // build headers
+      const headers = buildHeaders();
+
+      // send request
+      const response = await post(form.action, headers, json);
+
+      console.log(response);
+    }
+
+    // submit data as JSON
+    loginForm.addEventListener("submit", (e) => {
+      submitForm(e, this);
+    })
+    
   </script>
 </html>
