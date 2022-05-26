@@ -1,8 +1,8 @@
 import {PassportStatic} from 'passport';
 import passportStrategy = require('passport-local');
 const PassportLocalStrategy = passportStrategy.Strategy;
-import { Error, ErrorType } from './error';
-import { RadioHost } from './models/radioHost';
+import { Error, ErrorType } from '../error';
+import { RadioHost } from '../models/radioHost';
 import * as bcrypt from 'bcrypt';
 
 export const configureAuthentication = (passport: PassportStatic) => {
