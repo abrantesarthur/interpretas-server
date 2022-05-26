@@ -60,7 +60,6 @@ const getLogin = (req, res) => {
 };
 exports.getLogin = getLogin;
 const postLogin = (req, res, next) => {
-    console.log(req.body);
     // validate argument
     try {
         (0, utils_1.validateArgument)(req.body, ["email", "password"], ["string", "string"], [true, true]);

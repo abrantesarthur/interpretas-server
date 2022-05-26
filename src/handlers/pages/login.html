@@ -36,8 +36,18 @@
       return headers;
     }
 
-    function post(uri, headers, body) {
-      if(!ui || !headers || !body) {
+    async function parseResponse(response) {
+      if(response.ok) {
+        return await response.json();
+      } else {
+        return JSON.stringify({
+          status: response.status
+        })
+      }
+    }
+
+    async function post(uri, headers, body) {
+      if(!uri || !headers || !body) {
         throw new Error("One or more post() parameters was not passed");
       }
       try {
@@ -46,8 +56,9 @@
           headers: headers,
           body: JSON.stringify(body)
         });
-        const content = await rawResponse.JSON();
-        return content;
+        if(rawResponse.ok) {
+          return await rawResponse.json();
+        }
       } catch(e) {
         console.error(`Error at POST request: ${e}`);
         throw e;
@@ -55,7 +66,7 @@
     }
 
     // define submiteForm function that submits data as JSON
-    function submitForm(event, form) {
+    async function submitForm(event, form) {
       // prevent reloadling the page
       event.preventDefault();
 
@@ -72,14 +83,14 @@
 
       // send request
       const response = await post(form.action, headers, json);
-
       console.log(response);
+
     }
 
     // submit data as JSON
     loginForm.addEventListener("submit", (e) => {
-      submitForm(e, this);
+      submitForm(e, loginForm);
     })
-    
+
   </script>
 </html>

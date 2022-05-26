@@ -73,7 +73,6 @@ const getLogin : RequestHandler = (req, res) => {
 }
 
 const postLogin : RequestHandler = (req, res, next) => {
-    console.log(req.body);
     // validate argument
     try {
         validateArgument(
@@ -107,7 +106,6 @@ const postLogin : RequestHandler = (req, res, next) => {
                 };
                 return next(e);
             }
-            
             
             return res.send(JSON.stringify({
                 id: user._id,
