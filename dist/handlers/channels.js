@@ -113,9 +113,62 @@ const getChannels = (req, res, next) => {
 };
 exports.getChannels = getChannels;
 const emitAudioContent = (audioContent, socket) => {
-    // TODO: translate then emit to listeners
-    // TODO: instead of socket, broadcast it to everyone in the room
-    socket.emit("received audio content");
+    let request = socket.request;
+    // TODO: consider accumulating the output then send it
+    // user must be authenticated to emit audio content
+    if (request.isUnauthenticated()) {
+        return;
+    }
+    // make sure channel id is defined within the session
+    if (request.session.channelID === undefined || request.session.channelID.length === 0) {
+        return;
+    }
+    let chID = request.session.channelID;
+    const config = {
+        // TODO: make dynamic
+        // translate from english to portuguese
+        audioConfig: {
+            audioEncoding: "linear16",
+            sourceLanguageCode: "en-US",
+            targetLanguageCode: "pt-BR",
+        },
+        // continue translating even if speaker pauses
+        singleUtterance: false,
+    };
+    // configure translation listeners only once
+    if (request.session.firstRequest === true) {
+        // broadcasts translation results to all clients subscribed to the room
+        stream.on('data', d => {
+            const { error, result, _ } = d;
+            // socket.to(chID).emit(data);
+            // socket.to(chID).emit("received audio content", data);
+            if (error !== null) {
+            }
+            console.log(d);
+            console.log(error);
+            console.log(result);
+            if (result.isFinal === true) {
+                socket.emit("translatedAudioContent", result.textTranslationResult.translation);
+            }
+        });
+        // register error listener
+        stream.on('error', e => {
+            // TODO: how do we handle errors?
+        });
+        // send first request, which only needs streaming config
+        stream.write({
+            streamingConfig: config,
+            audioContent: null,
+        });
+        request.session.firstRequest = false;
+        // TODO: probably have to synchronously save sesssion here, instead
+        // of waiting until the end of request.
+    }
+    // subsequent requests need audioContent
+    stream.write({
+        streamingConfig: config,
+        audioContent: audioContent,
+    });
 };
 exports.emitAudioContent = emitAudioContent;
 const consumeAudioContent = (req, res) => {
@@ -126,44 +179,3 @@ const getAllChannels = (req, res) => {
     res.sendFile(__dirname + "/channels.html");
 };
 exports.getAllChannels = getAllChannels;
-// app.post('/channel', (req, res) => {
-//     const audioContent = req.body.audio_content;
-//     // TODO: check that the audio content is not undefined
-//     // TODO: accumulate the output then send it
-//     const config = {
-//         // TODO: make dynamic
-//         // translate from english to portuguese
-//         audioConfig: {
-//           audioEncoding: "linear16",
-//           sourceLanguageCode: "en-US",
-//           targetLanguageCode: "pt-BR",
-//         },
-//         // continue translating even if speaker pauses
-//         singleUtterance: false,       
-//     };
-//     // TODO: this is causing a memory leak: many listeners are being set
-//     stream.on('data', data => {
-//       res.end(`\n${data.result.textTranslationResult.translation}`);
-//     });
-//     // listen for google Media Translation errors and send to client
-//     stream.on('error', e => {
-//       res.status(500);
-//       res.send("failed to translate audio");
-//     })
-//     if(!stream.destroyed) {
-//       // First request needs to have only a streaming config, no data.
-//       if(isFirst) {
-//         console.log("\nfirst");
-//          // listen for google Media Translation responses and send to client
-//         stream.write({
-//           streamingConfig: config,
-//           audioContent: null,
-//         });
-//         isFirst = false;
-//       }
-//       stream.write({
-//         streamingConfig: config,
-//         audioContent: audioContent,
-//       });
-//     }
-// });

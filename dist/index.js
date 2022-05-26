@@ -1,13 +1,4 @@
 'use strict';
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 // load configuration variables from .env file
 require('dotenv').config();
@@ -29,9 +20,9 @@ const db = require("mongoose");
 // other imports
 const uuid_1 = require("uuid");
 const error_1 = require("./error");
-const auth_2 = require("./auth");
+const auth_2 = require("./config/auth");
+const socket_1 = require("./config/socket");
 const passport = require("passport");
-const utils_1 = require("./utils");
 // ==================== CONFIGURE HTTP SERVER ========================== //
 // instantiate the http server
 const app = express();
@@ -75,38 +66,8 @@ const wrap = (middleware) => (socket, next) => middleware(socket.request, {}, ne
 channelsIO.use(wrap(sessionMiddleware));
 channelsIO.use(wrap(passport.initialize()));
 channelsIO.use(wrap(passport.session()));
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-// connection event
-channelsIO.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
-    let request = socket.request;
-    // make sure a channel_id was passed and is a string
-    let channel_id = socket.handshake.query.channel_id;
-    if (!(0, utils_1.isString)(channel_id)) {
-        socket.disconnect();
-        return;
-    }
-    // if this is an authenticated request, make sure user who connected owns the channel
-    if (request.isAuthenticated()) {
-        // get user id
-        let userID = request.session.passport.user;
-        // TODO get user's channels and make sure he's the owner
-    }
-    // save channel ID in session for easy access in subsequent requests
-    request.session.channelID = channel_id;
-    // register event handlers
-    socket.on("audioContent", (audioContent) => {
-        console.log(request.session);
-        // user must be authenticated to emit audio content
-        if (request.isUnauthenticated()) {
-            return;
-        }
-        return ch.emitAudioContent(audioContent, socket);
-    });
-    // notify client that they can start sending requests
-    socket.emit("connected");
-}));
+// configure connection event
+channelsIO.on("connection", socket_1.configureSocketConnection);
 // ====================== CONFIGURE DATABASE ============================ //
 db.connect(process.env.DB_URI || "")
     .then(() => {

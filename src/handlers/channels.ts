@@ -181,8 +181,14 @@ const emitAudioContent = (audioContent: string, socket: Socket) => {
     // configure translation listeners only once
     if(request.session.firstRequest === true) {
         // broadcasts translation results to all clients subscribed to the room
-        stream.on('data', data => {
-            socket.to(chID).emit(data);
+        stream.on('data', d => {
+            const {error, result, _} = d;
+            if(error !== null) {
+            }
+            // TODO: accumulate
+            socket.emit("translatedAudioContent", result.textTranslationResult.translation);
+            // TODO: send only to children
+            // socket.to(chID).emit("received audio content", data);
         });
         
         // register error listener
