@@ -97,7 +97,7 @@ const createChannel: RequestHandler = (req, res, next) => {
     })
 }
 
-const getChannels : RequestHandler = (req, res, next) => {    
+const getChannelsByHostId : RequestHandler = (req, res, next) => {    
     console.log("getChannels");
     // get radio host id from url params
     let radioHostId  = req.params.radioHostId;
@@ -150,6 +150,29 @@ const getChannels : RequestHandler = (req, res, next) => {
     })
 }
 
+const getAllChannels : RequestHandler = (_, res, next) => {    
+    RadioChannel
+    .find()
+    .exec((err, radioChannels) => {
+        if(err) {
+            return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
+        }
+
+        let channels : any[] = [];
+        radioChannels.forEach((rc) => {
+            channels.push({
+                "id": rc._id,
+                "radio_host_id": rc.radio_host_id,
+                "name": rc.name,
+            });
+        })
+
+        console.log(channels);
+
+        return res.end(JSON.stringify(channels));
+    })
+}
+
 const emitAudioContent = (audioContent: string, socket: Socket) => {
     let request = socket.request as express.Request;
 
@@ -184,9 +207,8 @@ const emitAudioContent = (audioContent: string, socket: Socket) => {
             if(error !== null) {
             }
             // TODO: accumulate
-            socket.emit("translatedAudioContent", result.textTranslationResult.translation);
-            // TODO: send only to children
-            // socket.to(chID).emit("received audio content", data);
+            // broadcast translated audio to listeners
+            socket.to(chID).emit("translatedAudioContent", result.textTranslationResult.translation);
         });
         
         // register error listener
@@ -217,17 +239,13 @@ const consumeAudioContent: RequestHandler = (req, res) => {
     res.sendFile(__dirname + "/../channels.html");
 }
 
-const getAllChannels: RequestHandler = (req, res) => {
-    res.sendFile(__dirname + "/channels.html");
-}
-
 // ==================== EXPORT HANDLERS ====================== //
 
 export {
     createChannel,
     emitAudioContent,
     consumeAudioContent,
-    getChannels,
+    getChannelsByHostId,
     getAllChannels,
 };
 

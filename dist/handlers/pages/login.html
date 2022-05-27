@@ -4,7 +4,6 @@
     <title>Interpretas - Login</title>
   </head>
   <body>
-    <ul id="messages"></ul>
     <form id="loginForm" action="" method="post">
       <div class="column">
         <label>Email</label>   
@@ -56,7 +55,9 @@
           headers: headers,
           body: JSON.stringify(body)
         });
-        return await parseResponse(rawResponse);
+        if(rawResponse.ok) {
+          return await rawResponse.json();
+        }
       } catch(e) {
         console.error(`Error at POST request: ${e}`);
         throw e;

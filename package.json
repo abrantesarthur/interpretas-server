@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "copy": "copyfiles -u 1 src/**/*.html src/**/*.css dist/"
+    "copy": "copyfiles -u 1 src/**/*.html src/**/*.css src/**/*.js dist/"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

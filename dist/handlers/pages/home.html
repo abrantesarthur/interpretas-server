@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Interpretas - Channels</title>
+  </head>
+  <body>
+    <h1>Welcome to Interpretas</h1>
+    <p>Click on one of the channels below to start streaming the events live</p>
+    <ul>
+      <li><a>Commencement on Sunday, May 29th</a></li>
+    </ul>
+  </body>
+  <script>
+
+    // define submiteForm function that submits data as JSON
+    async function submitForm(event, form) {
+      // prevent reloadling the page
+      event.preventDefault();
+
+      // prevent user interaction to prevent double submissions
+      const btn = document.getElementById("loginButton");
+      btn.disabled = true;
+      setTimeout(() => btn.disabled = false, 2000);
+
+      // build JSON body
+      const json = buildJson(form);
+
+      // build headers
+      const headers = buildHeaders();
+
+      // send request
+      const response = await post(form.action, headers, json);
+      console.log(response);
+
+    }
+
+    // submit data as JSON
+    loginForm.addEventListener("submit", (e) => {
+      submitForm(e, loginForm);
+    })
+
+  </script>
+</html>

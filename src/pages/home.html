@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Interpretas - Channels</title>
+  </head>
+  <body>
+    <h1>Welcome to Interpretas</h1>
+    <p>Click on one of the channels below to start streaming the events live</p>
+    <ul id="channelList">
+    </ul>
+  </body>
+  <script>
+    // ====================== HTTP FUNCTIONS ============================ //
+
+    // TODO: define target form action dynamically
+    let baseURI = "http://localhost:3000";
+
+    async function _fetch(method, path, headers = buildHeaders(), body = {}) {
+      if (!method || !path) {
+        throw new Error("One or more post() parameters was not passed");
+      }
+      try {
+        let request = {};
+        if (method === "POST") {
+          request = {
+            method: method,
+            headers: headers,
+            body: JSON.stringify(body),
+          }
+        } else if(method === "GET") {
+          request = {
+            method: method,
+            headers: headers,
+          }
+        }
+        const r = await fetch(baseURI + path, request);
+        if (r.ok) {
+          return await r.json();
+        }
+      } catch (e) {
+        console.error(`Error at POST request: ${e}`);
+        throw e;
+      }
+    }
+
+    async function post(path, headers, body) {
+      return _fetch("POST", path, headers, body);
+    }
+
+    async function get(path, headers = buildHeaders()) {
+      return _fetch("GET", path, headers);
+    }
+
+    function buildHeaders() {
+      headers = {};
+      headers["Content-Type"] = "application/json";
+      return headers;
+    }
+
+    // ================================================================ //
+
+    // get all channels and add display them on the screen
+    get("/channels").then((channels) => {
+
+      // get channel list ul element
+      const channelList = document.getElementById("channelList");
+
+      // add channels to the list as li elements
+      channels.forEach((ch) => {
+        const a = document.createElement('a');
+        a.appendChild(document.createTextNode(ch.name));
+        a.setAttribute("href", "/channel.html?id="+ch.id);
+        const li = document.createElement('li');
+        li.appendChild(a);
+        channelList.appendChild(li);
+        channelList.appendChild(li);
+      })      
+    })
+
+    // ================================================================ //
+  </script>
+</html>

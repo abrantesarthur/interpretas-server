@@ -15,7 +15,7 @@ import sessionFileStore = require('session-file-store');
 const SessionFileStore = sessionFileStore(session);
 
 // import endpoint handlers
-import { getLogin, postLogin, postSignup } from './handlers/auth';
+import {postLogin, postSignup } from './handlers/auth';
 import * as ch from './handlers/channels';
 
 // import database
@@ -114,13 +114,16 @@ db.connect(process.env.DB_URI || "")
 // account endpoints
 app.post("/signup", postSignup);
 app.post("/login", postLogin);
-app.get("/login", getLogin);
 
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
-app.get("/accounts/:radioHostId/channels", ch.getChannels);
-app.get("channels/:radioChannelId", ch.consumeAudioContent);
-app.get("/", ch.getAllChannels);
+app.get("/accounts/:radioHostId/channels", ch.getChannelsByHostId);
+app.get("/channels", ch.getAllChannels);
+app.get("/channels/:radioChannelId", ch.consumeAudioContent);
+
+
+// pages endpoints
+app.get("/", (_, res) => {return res.sendFile(__dirname + "/pages/home.html");});
 
 // =========================== START SERVER ================================ //
 

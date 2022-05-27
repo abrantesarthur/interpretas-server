@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postLogin = exports.getLogin = exports.postSignup = void 0;
+exports.postLogin = exports.postSignup = void 0;
 const passport = require("passport");
 const error_1 = require("../error");
 const utils_1 = require("../utils");
@@ -55,10 +55,6 @@ const postSignup = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     }));
 });
 exports.postSignup = postSignup;
-const getLogin = (req, res) => {
-    res.sendFile(__dirname + "/pages/login.html");
-};
-exports.getLogin = getLogin;
 const postLogin = (req, res, next) => {
     // validate argument
     try {

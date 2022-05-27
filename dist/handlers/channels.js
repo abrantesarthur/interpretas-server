@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllChannels = exports.getChannels = exports.consumeAudioContent = exports.emitAudioContent = exports.createChannel = void 0;
+exports.getAllChannels = exports.getChannelsByHostId = exports.consumeAudioContent = exports.emitAudioContent = exports.createChannel = void 0;
 const media_translation_1 = require("@google-cloud/media-translation");
 const error_1 = require("../error");
 const radioChannel_1 = require("../models/radioChannel");
@@ -75,7 +75,7 @@ const createChannel = (req, res, next) => {
     });
 };
 exports.createChannel = createChannel;
-const getChannels = (req, res, next) => {
+const getChannelsByHostId = (req, res, next) => {
     console.log("getChannels");
     // get radio host id from url params
     let radioHostId = req.params.radioHostId;
@@ -111,7 +111,27 @@ const getChannels = (req, res, next) => {
         });
     });
 };
-exports.getChannels = getChannels;
+exports.getChannelsByHostId = getChannelsByHostId;
+const getAllChannels = (_, res, next) => {
+    radioChannel_1.RadioChannel
+        .find()
+        .exec((err, radioChannels) => {
+        if (err) {
+            return next(new error_1.Error(500, error_1.ErrorType.INTERNAL_ERROR, 'something wrong happened'));
+        }
+        let channels = [];
+        radioChannels.forEach((rc) => {
+            channels.push({
+                "id": rc._id,
+                "radio_host_id": rc.radio_host_id,
+                "name": rc.name,
+            });
+        });
+        console.log(channels);
+        return res.end(JSON.stringify(channels));
+    });
+};
+exports.getAllChannels = getAllChannels;
 const emitAudioContent = (audioContent, socket) => {
     let request = socket.request;
     // user must be authenticated to emit audio content
@@ -142,9 +162,8 @@ const emitAudioContent = (audioContent, socket) => {
             if (error !== null) {
             }
             // TODO: accumulate
-            socket.emit("translatedAudioContent", result.textTranslationResult.translation);
-            // TODO: send only to children
-            // socket.to(chID).emit("received audio content", data);
+            // broadcast translated audio to listeners
+            socket.to(chID).emit("translatedAudioContent", result.textTranslationResult.translation);
         });
         // register error listener
         stream.on('error', e => {
@@ -170,7 +189,3 @@ const consumeAudioContent = (req, res) => {
     res.sendFile(__dirname + "/../channels.html");
 };
 exports.consumeAudioContent = consumeAudioContent;
-const getAllChannels = (req, res) => {
-    res.sendFile(__dirname + "/channels.html");
-};
-exports.getAllChannels = getAllChannels;

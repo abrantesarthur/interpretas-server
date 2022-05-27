@@ -68,10 +68,6 @@ const postSignup : RequestHandler = async (req, res, next) => {
     })    
 }
 
-const getLogin : RequestHandler = (req, res) => {
-    res.sendFile(__dirname + "/pages/login.html");
-}
-
 const postLogin : RequestHandler = (req, res, next) => {
     // validate argument
     try {
@@ -119,4 +115,4 @@ const postLogin : RequestHandler = (req, res, next) => {
 
 // ==================== EXPORT HANDLERS ====================== //
 
-export {postSignup, getLogin, postLogin};
+export {postSignup, postLogin};
