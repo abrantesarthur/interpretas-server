@@ -6,15 +6,7 @@ import { RadioChannel } from '../models/radioChannel';
 import { RadioHost } from '../models/radioHost';
 import { validateArgument } from '../utils';
 import express = require('express');
-
-
-// ================ CONFIGURE MEDIA TRANSLATION API ================== //
-  
-// Creates a client
-const client = new SpeechTranslationServiceClient();
-
-// Create a recognize stream
-const stream = client.streamingTranslateSpeech();
+import * as gax from 'google-gax';
 
 // ======================== DEFINE HANDLERS ========================== //
 
@@ -211,10 +203,18 @@ const emitAudioContent = (audioContent: string, socket: Socket) => {
         singleUtterance: false,       
     };
 
+    // instantiate a translation stream
+    let client: SpeechTranslationServiceClient;
+    let stream: any;
+
     // configure translation listeners only once
     if(request.session.firstRequest === true) {
+        // initiate the translation stream
+        client = new SpeechTranslationServiceClient();
+        stream = client.streamingTranslateSpeech();
+
         // broadcasts translation results to all clients subscribed to the room
-        stream.on('data', d => {
+        stream.on('data', (d: any) => {
             const {error, result, _} = d;
             if(error !== null) {
             }
@@ -224,8 +224,14 @@ const emitAudioContent = (audioContent: string, socket: Socket) => {
         });
         
         // register error listener
-        stream.on('error', e => {
+        stream.on('error', (e: any) => {
             // TODO: how do we handle errors?
+            console.log("an error has happened!");
+            console.log(e);
+
+            // restart the stream
+            client = new SpeechTranslationServiceClient();
+            stream = client.streamingTranslateSpeech();
         })
 
         // send first request, which only needs streaming config

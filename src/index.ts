@@ -28,7 +28,6 @@ import { errorHandler } from './error';
 import {configureAuthentication} from './config/auth';
 import {configureSocketConnection} from './config/socket';
 import passport = require('passport');
-import {isString} from "./utils";
 
 // ====================== CONFIGURE SESSIONS =========================== //
 

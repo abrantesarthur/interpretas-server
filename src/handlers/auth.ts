@@ -91,7 +91,6 @@ const postLogin : RequestHandler = (req, res, next) => {
         // strategy in index.ts, calling req.login() will invoke passport.serializeUser(),
         // defined in auth.ts, which, in turn, saves user info in the session.
         // Then, the callback passed here is invoked.
-        // TODO: handle error case.
         req.login(user, (err) => {
             // if passport.serializeUser returned an error, call error handling middleware
             if(err) {
