@@ -60,7 +60,7 @@
     // ================================================================ //
 
     // get all channels and add display them on the screen
-    get("/channels").then((channels) => {
+    get("/getChannels").then((channels) => {
 
       // get channel list ul element
       const channelList = document.getElementById("channelList");
@@ -69,7 +69,7 @@
       channels.forEach((ch) => {
         const a = document.createElement('a');
         a.appendChild(document.createTextNode(ch.name));
-        a.setAttribute("href", "/channel.html?id="+ch.id);
+        a.setAttribute("href", "/channel/"+ch.id);
         const li = document.createElement('li');
         li.appendChild(a);
         channelList.appendChild(li);

@@ -16,6 +16,7 @@ const stream = client.streamingTranslateSpeech();
 // ================ CONFIGURE SOCKET CONNECTION ================== //
 
 export const configureSocketConnection = async (socket: Socket) => {
+    console.log("socket received new connection");
     let request = socket.request as express.Request;
   
     // make sure a channel_id was passed and is a string
@@ -38,6 +39,8 @@ export const configureSocketConnection = async (socket: Socket) => {
 
       // register event handlers for when radio host broadcasts audio content
       socket.on("audioContent", (audioContent) => ch.emitAudioContent(audioContent, socket));
+    } else {
+      console.log("unauthenticated");
     }
   
     // subscribe socket to the channel room

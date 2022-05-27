@@ -118,12 +118,16 @@ app.post("/login", postLogin);
 // channel endpoints
 app.post("/accounts/:radioHostId/channels", ch.createChannel);
 app.get("/accounts/:radioHostId/channels", ch.getChannelsByHostId);
-app.get("/channels", ch.getAllChannels);
-app.get("/channels/:radioChannelId", ch.consumeAudioContent);
-
+app.get("/getChannels", ch.getAllChannels);
+app.get("/getChannel/:channelId", ch.getChannelById)
 
 // pages endpoints
-app.get("/", (_, res) => {return res.sendFile(__dirname + "/pages/home.html");});
+app.get("/", (_, res) => {
+  return res.sendFile(__dirname + "/html/home.html");
+});
+app.get("/channel/:channelId", (_, res) => {
+  return res.sendFile(__dirname + "/html/channel.html");
+});
 
 // =========================== START SERVER ================================ //
 

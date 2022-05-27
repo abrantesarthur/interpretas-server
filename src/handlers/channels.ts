@@ -173,6 +173,22 @@ const getAllChannels : RequestHandler = (_, res, next) => {
     })
 }
 
+const getChannelById : RequestHandler = (req, res, next) => {    
+    console.log("getChannelByID");
+    RadioChannel
+    .findById(req.params.channelId)
+    .exec((err, ch) => {
+        if(err) {
+            return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
+        }
+        return res.end(JSON.stringify({
+            "id": ch._id,
+            "radio_host_id": ch.radio_host_id,
+            "name": ch.name,
+        }));
+    })
+}
+
 const emitAudioContent = (audioContent: string, socket: Socket) => {
     let request = socket.request as express.Request;
 
@@ -235,17 +251,13 @@ const emitAudioContent = (audioContent: string, socket: Socket) => {
     });
 }
 
-const consumeAudioContent: RequestHandler = (req, res) => {
-    res.sendFile(__dirname + "/../channels.html");
-}
-
 // ==================== EXPORT HANDLERS ====================== //
 
 export {
     createChannel,
     emitAudioContent,
-    consumeAudioContent,
     getChannelsByHostId,
     getAllChannels,
+    getChannelById
 };
 
