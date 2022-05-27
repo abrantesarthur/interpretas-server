@@ -98,7 +98,6 @@ const createChannel: RequestHandler = (req, res, next) => {
 }
 
 const getChannelsByHostId : RequestHandler = (req, res, next) => {    
-    console.log("getChannels");
     // get radio host id from url params
     let radioHostId  = req.params.radioHostId;
 
@@ -167,14 +166,11 @@ const getAllChannels : RequestHandler = (_, res, next) => {
             });
         })
 
-        console.log(channels);
-
         return res.end(JSON.stringify(channels));
     })
 }
 
 const getChannelById : RequestHandler = (req, res, next) => {    
-    console.log("getChannelByID");
     RadioChannel
     .findById(req.params.channelId)
     .exec((err, ch) => {

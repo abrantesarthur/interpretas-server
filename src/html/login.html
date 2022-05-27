@@ -81,9 +81,7 @@
       const headers = buildHeaders();
 
       // send request
-      const response = await post(form.action, headers, json);
-      console.log(response);
-
+      await post(form.action, headers, json);
     }
 
     // submit data as JSON
