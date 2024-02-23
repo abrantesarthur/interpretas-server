@@ -249,7 +249,7 @@ const emitAudioContent = (audioContent: string, socket: Socket) => {
     // subsequent requests need audioContent
     stream.write({
         streamingConfig: config,
-        audioContent: audioContent,
+        audioContent,
     });
 }
 
