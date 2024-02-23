@@ -13,41 +13,33 @@ export const configureAuthentication = (passport: PassportStatic) => {
     passport.use(new PassportLocalStrategy(
         // alias username to 'email'
         {usernameField: 'email'},
-        (email, password, done) => {
+        async (email, password, done) => {
 
             // look for user on database
-            RadioHost.findOne({
+            const radioHost = await RadioHost.findOne({
                 email: email
-            }).exec((err, radioHost: any) => {
-                if(err) {
-                    return done(new Error(
-                        500,
-                        ErrorType.INTERNAL_ERROR,
-                        "something wrong happened"
-                    ));
-                }
+            }, 'password').exec();
 
-                // if account is not found, return error to passport.authenticate()
-                if(!radioHost) {
-                    return done(new Error(
-                        404,
-                        ErrorType.NOT_FOUND,
-                        "could not find account with email '" + email + "'",
-                    ));
-                }
+            // if account is not found, return error to passport.authenticate()
+            if(!radioHost) {
+                return done(new Error(
+                    404,
+                    ErrorType.NOT_FOUND,
+                    "could not find account with email '" + email + "'",
+                ));
+            }
 
-                // if password is invalid, return error to passport.authenticate()
-                if(!bcrypt.compareSync(password, radioHost.password)) {
-                    return done(new Error(
-                        422,
-                        ErrorType.INVALID_PARAMETER,
-                        '"password" is invalid'
-                    ));
-                }
+            // if password is invalid, return error to passport.authenticate()
+            if(!bcrypt.compareSync(password, radioHost.password)) {
+                return done(new Error(
+                    422,
+                    ErrorType.INVALID_PARAMETER,
+                    '"password" is invalid'
+                ));
+            }
 
-                // implicitly add a login() method to 'req' and return 'radioHost' to passport.authenticate()
-                return done(null, radioHost);
-            })
+            // implicitly add a login() method to 'req' and return 'radioHost' to passport.authenticate()
+            return done(null, radioHost);
         }
     ))
     
@@ -65,27 +57,19 @@ export const configureAuthentication = (passport: PassportStatic) => {
     // session id sent in the request to the session id in the session store.
     // If success, it passes it to the callback function, so we can retrieve
     // the remaining user info from our database.
-    passport.deserializeUser((id, done) => {
+    passport.deserializeUser(async (id, done) => {
         //  get user from database
-        RadioHost.findById(id).exec((err, radioHost) => {
-            if(err) {
-                return done(new Error(
-                    500,
-                    ErrorType.INTERNAL_ERROR,
-                    "something wrong happened"
-                ));
-            }
+        const radioHost = await RadioHost.findById(id).exec();
 
-            if(!radioHost) {
-                return done(new Error(
-                    401,
-                    ErrorType.UNAUTHORIZED,
-                    'client is not authenticated'
-                ));
-            }
+        if(!radioHost) {
+            return done(new Error(
+                401,
+                ErrorType.UNAUTHORIZED,
+                'client is not authenticated'
+            ));
+        }
 
-            done(null, radioHost);
-        })
+        done(null, radioHost);
     })
 }
   
