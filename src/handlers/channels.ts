@@ -10,7 +10,7 @@ import * as gax from 'google-gax';
 
 // ======================== DEFINE HANDLERS ========================== //
 
-const createChannel: RequestHandler = (req, res, next) => {
+const createChannel: RequestHandler = async (req, res, next) => {
 
     // radio host must be authenticated
     // TODO: require that radio host specifically is authenticated
@@ -34,147 +34,128 @@ const createChannel: RequestHandler = (req, res, next) => {
 
 
     // make sure radio host exists
-    RadioHost
+    const radioHost = await RadioHost
         .findById(radioHostId)
-        .exec((err, radioHost)  => {
-            if(err) {
-                return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
-            }
+        .exec();
 
-            if(!radioHost) {
-                return next(new Error(
-                    404,
-                    ErrorType.NOT_FOUND,
-                    'could not find radio host with id "' + radioHostId + '"'
-                ));
-            }
+    if(!radioHost) {
+        return next(new Error(
+            404,
+            ErrorType.NOT_FOUND,
+            'could not find radio host with id "' + radioHostId + '"'
+        ));
+    }
 
+    // make sure channel does not exist on database
+    const radioChannel = await RadioChannel
+        .findOne({radio_host_id: radioHost._id, name: req.body.name})
+        .exec();
+    
 
-            // make sure channel does not exist on database
-            RadioChannel
-                .findOne({radio_host_id: radioHost._id, name: req.body.name})
-                .exec(async (err, radioChannel) => {
-                    if(err) {
-                        return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
-                    }
-                    
-                    if(radioChannel) {
-                        return next(new Error(
-                            400,
-                            ErrorType.INVALID_REQUEST,
-                            'host with id "' + radioHost._id + '" already has a channel with name "' + req.body.name + '"'
-                        ));
-                    }
+    if(radioChannel) {
+        return next(new Error(
+            400,
+            ErrorType.INVALID_REQUEST,
+            'host with id "' + radioHost._id + '" already has a channel with name "' + req.body.name + '"'
+        ));
+    }
 
+    // create radio channel
+    const rc = new RadioChannel({
+        radio_host_id: radioHost._id,
+        name: req.body.name,
+    });
 
-                    // create radio channel
-                    const rc = new RadioChannel({
-                        radio_host_id: radioHost._id,
-                        name: req.body.name,
-                    });
+    const savedRadioChannel = await rc.save();
 
-                    await rc.save((err: any, radioChannel: any) => {
-                        if(err) {
-                            return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
-                        }
-
-                        return res.end(JSON.stringify({
-                            id: radioChannel._id,
-                            radio_host_id: radioHost._id,
-                            name: radioChannel.name,
-                        }))
-                    })
-
-            })
-    })
+    return res.end(JSON.stringify({
+        id: savedRadioChannel._id,
+        radio_host_id: radioHost._id,
+        name: savedRadioChannel.name,
+    }))
 }
 
-const getChannelsByHostId : RequestHandler = (req, res, next) => {    
+const getChannelsByHostId : RequestHandler = async (req, res, next) => {    
     // get radio host id from url params
     let radioHostId  = req.params.radioHostId;
 
 
     // make sure radio host exists
-    RadioHost
+    const radioHost = await RadioHost
         .findById(radioHostId)
-        .exec((err, radioHost)  => {
-            if(err) {
-                return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
-            }
+        .exec();
 
-            if(!radioHost) {
-                return next(new Error(
-                    404,
-                    ErrorType.NOT_FOUND,
-                    'could not find radio host with id "' + radioHostId + '"'
-                ));
-            }
+    if(!radioHost) {
+        return next(new Error(
+            404,
+            ErrorType.NOT_FOUND,
+            'could not find radio host with id "' + radioHostId + '"'
+        ));
+    }
 
 
-            // find channels
-            RadioChannel
-                .find({radio_host_id: radioHost._id})
-                .exec((err, radioChannels) => {
-                    if(err) {
-                        return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
-                    }
-                    
-                    if(!radioChannels || radioChannels.length === 0) {
-                        return next(new Error(
-                            400,
-                            ErrorType.INVALID_REQUEST,
-                            'host with id "' + radioHost._id + '" has no channels'
-                        ));
-                    }
+    // find channels
+    const radioChannels = await RadioChannel
+        .find({radio_host_id: radioHost._id})
+        .exec();
+    
+         
+    if(!radioChannels || radioChannels.length === 0) {
+        return next(new Error(
+            400,
+            ErrorType.INVALID_REQUEST,
+            'host with id "' + radioHost._id + '" has no channels'
+        ));
+    }
 
-                    let channels : any[] = [];
-                    radioChannels.forEach((rc) => {
-                        channels.push({
-                            "id": rc._id,
-                            "radio_host_id": rc.radio_host_id,
-                            "name": rc.name,
-                        });
-                    })
-
-                    return res.end(JSON.stringify(channels));
-            })
+    let channels : any[] = [];
+    radioChannels.forEach((rc) => {
+        channels.push({
+            "id": rc._id,
+            "radio_host_id": rc.radio_host_id,
+            "name": rc.name,
+        });
     })
+
+    return res.end(JSON.stringify(channels));
 }
 
-const getAllChannels : RequestHandler = (_, res, next) => {    
-    RadioChannel
+const getAllChannels : RequestHandler = async (_, res, next) => {    
+    const radioChannels = await RadioChannel
     .find()
-    .exec((err, radioChannels) => {
-        if(err) {
-            return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
-        }
+    .exec();
 
-        let channels : any[] = [];
-        radioChannels.forEach((rc) => {
-            channels.push({
-                "id": rc._id,
-                "radio_host_id": rc.radio_host_id,
-                "name": rc.name,
-            });
-        })
-
-        return res.end(JSON.stringify(channels));
+    let channels : any[] = [];
+    radioChannels.forEach((rc) => {
+        channels.push({
+            "id": rc._id,
+            "radio_host_id": rc.radio_host_id,
+            "name": rc.name,
+        });
     })
+
+    return res.end(JSON.stringify(channels));
 }
 
-const getChannelById : RequestHandler = (req, res, next) => {    
-    RadioChannel
+const getChannelById : RequestHandler = async (req, res, next) => {    
+    const radioChannel = await RadioChannel
     .findById(req.params.channelId)
-    .exec((err, ch) => {
-        if(err) {
-            return next(new Error(500, ErrorType.INTERNAL_ERROR, 'something wrong happened'));
-        }
-        return res.end(JSON.stringify({
-            "id": ch._id,
-            "radio_host_id": ch.radio_host_id,
-            "name": ch.name,
-        }));
-    })
+    .exec();
+
+    if(!radioChannel) {
+        return next(new Error(
+            400,
+            ErrorType.INVALID_REQUEST,
+            `Failed to find chanel with id '${req.params.channelId}'`
+        ));
+    }
+
+
+    return res.end(JSON.stringify({
+        "id": radioChannel._id,
+        "radio_host_id": radioChannel.radio_host_id,
+        "name": radioChannel.name,
+    }));
 }
 
 const emitAudioContent = (audioContent: string, socket: Socket) => {

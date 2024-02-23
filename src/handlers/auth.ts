@@ -24,48 +24,32 @@ const postSignup : RequestHandler = async (req, res, next) => {
     }
     
     // make sure radio host hasn't already signed up
-    RadioHost.findOne({
+    const radioHost = await RadioHost.findOne({
         email: req.body.email
     })
-    .exec(async (err, radioHost) => {
-        if(err) {
-            return next(new Error(
-                500,
-                ErrorType.INTERNAL_ERROR,
-                "something wrong happened"
-            ));
-        }
+    .exec();
+    
+    if(radioHost) {
+        return next(new Error(
+            422,
+            ErrorType.INVALID_PARAMETER,
+            "email '" + req.body.email + "' already in use"
+        ));
+    }
 
-        if(radioHost) {
-            return next(new Error(
-                422,
-                ErrorType.INVALID_PARAMETER,
-                "email '" + req.body.email + "' already in use"
-            ));
-        }
+    // save radioHost on database
+    assert(req.body.password !== undefined);
+    assert(req.body.password !== null);
+    let password : string = req.body.password || "";
 
-        // save radioHost on database
-        assert(req.body.password !== undefined);
-        assert(req.body.password !== null);
-        let password : string = req.body.password || "";
+    const rh = new RadioHost({
+        name: req.body.name,
+        email: req.body.email,
+        password: bcrypt.hashSync(password, 8)
+    });
+    const savedRadioHost = await rh.save();
 
-        const rh = new RadioHost({
-            name: req.body.name,
-            email: req.body.email,
-            password: bcrypt.hashSync(password, 8)
-        });
-        await rh.save((err: any, radioHost: any) => {
-            if(err) {
-                return next(new Error(
-                    500,
-                    ErrorType.INTERNAL_ERROR,
-                    "something wrong happened"
-                ));
-            }
-            
-            return res.end(JSON.stringify({account_id: radioHost["_id"]}));
-        })
-    })    
+    return res.end(JSON.stringify({account_id: savedRadioHost["_id"]}));
 }
 
 const postLogin : RequestHandler = (req, res, next) => {
@@ -83,7 +67,7 @@ const postLogin : RequestHandler = (req, res, next) => {
 
     // passport.authenticate() invokes the local strategy defined in index.ts to
     // validate the 'email' and 'password' passed as part of this request.
-    passport.authenticate('local', (err, user, _) => {
+    passport.authenticate('local', (err: any, user: any) => {
         // if local strategy returned error, call error handling middleware
         if(err) return next(err);
  
